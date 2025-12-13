@@ -1,6 +1,6 @@
 # TypeErasureExample
-This code demonstrates using the C++ type erasure technique to encapsulate parsed NMEA sentences in a common container, avoiding a lot of pointers, casting, and inheritance.
+This directory contains example code demonstrating type erasure using external polymorphism.
 
-NMEA is used as a motivating example.
+All inputs are provided as test strings to keep the focus on the type-erasure technique itself.
 
-See my [article](https://markvtechblog.wordpress.com/2025/08/13/a-working-example-of-type-erasure-in-modern-c/).
+Unit tests are used as the primary driver to provide deterministic inputs and validate behavior.
