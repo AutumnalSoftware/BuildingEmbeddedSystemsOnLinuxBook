@@ -1,30 +1,30 @@
-#-----------------------------------------------------------------------------
-# Copyright (c) 2025 Mark Wilson
-#
-# Distributed under the Boost Software License, Version 1.0.
-# (See accompanying file LICENSE_1_0.txt or copy at
-#  https://www.boost.org/LICENSE_1_0.txt)
-#-----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.16)
-
-project(AnyNMEAMessage LANGUAGES CXX)
+project(TypeErasureChapter LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(AnyNMEAMessage main.cpp
-    AnyNMEAMessage.h
-    NMEAExtractionStream.cpp NMEAExtractionStream.h NMEAInsertionStream.cpp NMEAInsertionStream.h
-    ImmutableBuffer.cpp ImmutableBuffer.h MutableBuffer.cpp MutableBuffer.h
-    Register32Bits.h
-    NMEACommon.cpp NMEACommon.h
-    traits.h
-
-
+set(SHARED_SOURCES
+    ImmutableBuffer.cpp
+    MutableBuffer.cpp
+    NMEACommon.cpp
+    NMEAExtractionStream.cpp
+    NMEAInsertionStream.cpp
 )
 
-include(GNUInstallDirs)
-install(TARGETS AnyNMEAMessage
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+add_executable(typeErasureDemo
+    typeErasureDemo.cpp
+    ${SHARED_SOURCES}
 )
+
+add_executable(typeErasureTests
+    tests.cpp
+    ${SHARED_SOURCES}
+)
+
+# If AnyNMEAMessage is header-only, nothing else needed.
+# If you later add AnyNMEAMessage.cpp, add it to SHARED_SOURCES.
+
+include(CTest)
+add_test(NAME typeErasureTests COMMAND typeErasureTests)
+

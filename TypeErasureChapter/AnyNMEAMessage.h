@@ -89,7 +89,7 @@ public:
 
     bool isEmpty() const { return self_ == nullptr; }
 
-    explicit operator bool() const noexcept { return isEmpty(); }
+    explicit operator bool() const noexcept { return !isEmpty(); }
 
     // Type queries / access
     const std::type_info& type() const noexcept

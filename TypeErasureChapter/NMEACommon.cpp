@@ -124,5 +124,7 @@ std::string toString(memoryClass_t mc)
     case memoryClass_t::NONVOLATILE:
         return "NONVOLATILE";
         break;
+    default:
+        return "UNKNOWN";
     }
 }

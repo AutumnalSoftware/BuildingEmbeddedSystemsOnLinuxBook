@@ -1,29 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
 
-//-----------------------------------------------------------------------------
-// Copyright (c) 2025 Mark Wilson
-//
-// Distributed under the Boost Software License, Version 1.0.
-// (See accompanying file LICENSE_1_0.txt or copy at
-//  https://www.boost.org/LICENSE_1_0.txt)
-//-----------------------------------------------------------------------------
+#include <cassert>
+#include <cstring>
 #include <iostream>
 #include <string>
 
 #include "AnyNMEAMessage.h"
-
 #include "NMEAInsertionStream.h"
 #include "NMEAExtractionStream.h"
-
 #include "MutableBuffer.h"
 #include "ImmutableBuffer.h"
 
 using namespace std;
 
-//
-// Strawmen NMEA messages to keep things simple.
-//
+// Strawmen messages (same as your main.cpp)
 struct GGAMessage
 {
     int i{42};
@@ -43,7 +34,6 @@ NMEAInsertionStream &operator<<(NMEAInsertionStream &stream, const GGAMessage &m
     stream << msg.d;
     stream << msg.s;
     stream << NMEAInsertionStream::EndMsg();
-
     return stream;
 }
 
@@ -52,12 +42,8 @@ NMEAExtractionStream &operator>>(NMEAExtractionStream &stream, GGAMessage &msg)
     stream >> msg.i;
     stream >> msg.d;
     stream >> msg.s;
-
     return stream;
 }
-
-
-
 
 struct RMCMessage
 {
@@ -76,7 +62,6 @@ NMEAInsertionStream &operator<<(NMEAInsertionStream &stream, const RMCMessage &m
     stream << msg.i;
     stream << msg.d;
     stream << NMEAInsertionStream::EndMsg();
-
     return stream;
 }
 
@@ -84,7 +69,6 @@ NMEAExtractionStream &operator>>(NMEAExtractionStream &stream, RMCMessage &msg)
 {
     stream >> msg.i;
     stream >> msg.d;
-
     return stream;
 }
 
@@ -100,90 +84,61 @@ struct NMEATraits<RMCMessage>
     static std::string messageName() { return "RMC"; }
 };
 
-
-void testQueryAndAccessors()
+static void testQueryAndAccessors()
 {
-    cout << "TEST QUERY AND ACCESSORS" << endl;
-    cout << "===================================" << endl;
-
     GGAMessage gga1{1, 43.34, "HELLO"};
-    cout << gga1 << endl;
     RMCMessage rmc1{};
-    cout << rmc1 << endl;
 
     AnyNMEAMessage m1("MW", gga1);
     AnyNMEAMessage m2("MW", "RMC", rmc1);
 
-    if (!m1.isEmpty()) {
-        cout << "m1 contains something" << endl;
-    }
+    assert(!m1.isEmpty());
+    assert(static_cast<bool>(m1));
 
-    if (!m1) {
-        cout << "m1 contains something" << endl;
-    }
+    assert(m1.isType<GGAMessage>());
+    assert(m1.getMessageName() == "GGA");
+    assert(m1.getTalker() == "MW");
 
-    cout << endl;
+    assert(m2.isType<RMCMessage>());
+    assert(m2.getMessageName() == "RMC");
 
-    if (m1.isType<GGAMessage>()) {
-        cout << "m1 is a GGAMessage" << endl;
-        cout << "Message is " << m1.getMessageName() << endl;
-    }
+    assert(!m1.isType<RMCMessage>());
 
-    if (m1) {
-        auto v1 = m1.get<GGAMessage>();
-    }
-
-
-    if (m2.isType<RMCMessage>()) {
-        cout << "m2 is a RMCMessage" << endl;
-        cout << "Message is " << m2.getMessageName() << endl;
-    }
-
-    if (!m1.isType<RMCMessage>()) {
-        cout << "m1 is NOT an RMCMessage" << endl;
-    }
-
-    cout << "m1 talker is " << m1.getTalker() << endl;
-    cout << "m1 message is " << m1.getMessageName() << endl;
-    cout << "m1 checksum is " << static_cast<int>(m1.getChecksum()) << endl;
-    cout << "m1 size is " << m1.getSize() << endl;
-
+    // Empty message should be false
     AnyNMEAMessage empty;
-    if (empty.isEmpty()) {
-        cout << "The empty message is empty" << endl;
-    }
-    if (empty) {
-        cout << "The empty message is empty" << endl;
-    }
+    assert(empty.isEmpty());
+    assert(!static_cast<bool>(empty));
 }
 
-void testCopy()
+static void testCopy()
 {
-    cout << "TEST ASSIGNMENT" << endl;
-    cout << "===================================" << endl;
-
     GGAMessage gga1{1, 43.34, "HELLO"};
     AnyNMEAMessage m1("MW", gga1);
 
     AnyNMEAMessage m2 = m1;
 
-    cout << "[m1] " << m1.get<GGAMessage>() << endl;
-    cout << "[m2] " << m2.get<GGAMessage>() << endl;
+    auto v1 = m1.get<GGAMessage>();
+    auto v2 = m2.get<GGAMessage>();
 
+    assert(v1.i == v2.i);
+    assert(v1.d == v2.d);
+    assert(v1.s == v2.s);
 }
 
-void testSerialization()
+static void testSerialization()
 {
     GGAMessage gga1{1, 43.34, "HELLO"};
     AnyNMEAMessage m1("MW", gga1);
 
-    char buffer[1024];
-    MutableBuffer mb(buffer, 1024);
+    char buffer[1024]{};
+    MutableBuffer mb(buffer, sizeof(buffer));
 
     NMEAInsertionStream nis(mb, "GT", "GGA");
     m1.serialize(nis);
 
-    cout << "Serialized GGA message is " << buffer << endl;
+    assert(std::strlen(buffer) > 0);
+    // Optional, depending on your final sentence format:
+    // assert(std::strstr(buffer, "GGA") != nullptr);
 }
 
 int main()
@@ -192,5 +147,7 @@ int main()
     testCopy();
     testSerialization();
 
+    std::cout << "All tests passed.\n";
     return 0;
 }
+
