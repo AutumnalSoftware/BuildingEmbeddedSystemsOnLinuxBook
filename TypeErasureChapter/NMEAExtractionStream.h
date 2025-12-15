@@ -13,7 +13,8 @@
 #include <vector>
 #include <string>
 
-class ByteView;
+#include "Common/ByteView.h"
+
 class Register32Bits;
 
 using FieldStrings = std::vector<std::string_view>;
@@ -34,29 +35,35 @@ public:
 
     std::string getMessage() const;
 
-    bool numberOfFields() const;
+    std::size_t numberOfFields() const;
 
     bool isChecksumValid() const;
 
     void reset();
 
-    const NMEAExtractionStream& operator>>(int& value);
+    bool hasError() const noexcept { return mErrorFlag; }
 
-    const NMEAExtractionStream& operator>>(unsigned int& value);
+    NMEAExtractionStream& operator>>(int& value);
 
-    const NMEAExtractionStream& operator>>(double& value);
+    NMEAExtractionStream& operator>>(unsigned int& value);
 
-    const NMEAExtractionStream& operator>>(Register32Bits& value);
+    NMEAExtractionStream& operator>>(double& value);
 
-    const NMEAExtractionStream& operator>>(std::string& value);
+    NMEAExtractionStream& operator>>(Register32Bits& value);
+
+    NMEAExtractionStream& operator>>(std::string& value);
+
+    std::string_view nextField() noexcept;
 
 private:
-    const ByteView& mNMEAMessage;
+    const ByteView mNMEAMessage;
     bool mChecksumValidFlag {false};
 
     FieldStrings mFields;
 
     unsigned int mChecksum {0};
+
+    bool mErrorFlag {false};
 
     /**
      * @brief mTalker NMEA talker, which is 2 bytes. SSO will kick in, so std::string is okay here.
@@ -69,10 +76,4 @@ private:
     std::string mMessage;
 
     uint16_t mFieldIdx{1};
-
-    /**
-     * @brief _extractPayload returns a view that includes only the actual NMEA payload fields.
-     * @param nmeaMessage A complete NMEA message: $<talker><message>,<f1>,<f2>,<f3>,...,<fn>,*<checksum>
-     */
-    void _extractPayload(const char* nmeaMessage);
 };

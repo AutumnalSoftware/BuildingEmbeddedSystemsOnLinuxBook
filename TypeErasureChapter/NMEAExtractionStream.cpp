@@ -8,13 +8,11 @@
 // (See accompanying file LICENSE_1_0.txt or copy at
 //  https://www.boost.org/LICENSE_1_0.txt)
 //-----------------------------------------------------------------------------
-#include <iostream>
-#include <charconv>
-#include <stdexcept>
 #include <cmath>
 #include <climits>
 #include <cstdlib>
 #include <string>
+#include <charconv>
 
 #include "Common/ByteView.h"
 
@@ -24,35 +22,70 @@
 
 using namespace std;
 
-
+static bool parseHex2(std::string_view sv, std::uint8_t& out) noexcept;
+static std::string_view trimTrailing(std::string_view sv) noexcept;
 
 // Forward declarations
 FieldStrings parseMessage(std::string_view message);
-std::string_view skip_leading_whitespace(std::string_view strv);
+std::string_view skipLeadingWhitespace(std::string_view strv);
 
 
-NMEAExtractionStream::NMEAExtractionStream(const ByteView &nmeaMessage) :
-    mNMEAMessage(nmeaMessage)
+static inline bool isHexDigit(char c) noexcept
 {
-    //mFields = parseMessage(nmeaMessage.data());
+    return (c >= '0' && c <= '9') ||
+           (c >= 'a' && c <= 'f') ||
+           (c >= 'A' && c <= 'F');
+}
 
-    mFields = parseMessage(std::string_view{
-        toCharPtr(nmeaMessage.data()),
-        nmeaMessage.size()
-    });
-
-
-    //for (auto field : mFields)
-        //cout << "** field = " << field << endl;
-
-    if ( mFields.size() > 0 )
+std::string_view NMEAExtractionStream::nextField() noexcept
+{
+    if (mFieldIdx >= mFields.size())
     {
-        mTalker = mFields[0].substr(0, 2);
+        mErrorFlag = true;
+        return {};
+    }
+
+    return mFields[mFieldIdx++];
+}
+
+
+NMEAExtractionStream::NMEAExtractionStream(const ByteView& nmeaMessage)
+    : mNMEAMessage(nmeaMessage)
+{
+    // Build a view over the bytes (text layered on bytes)
+    std::string_view msg{ toCharPtr(nmeaMessage.data()), nmeaMessage.size() };
+    msg = trimTrailing(msg);
+
+    // Validate checksum if present: "...*HH"
+    mChecksumValidFlag = false;
+    mChecksum = 0;
+
+    const std::size_t star = msg.rfind('*');
+    if (star != std::string_view::npos && star + 3 <= msg.size())
+    {
+        std::uint8_t parsed = 0;
+        if (parseHex2(msg.substr(star + 1, 2), parsed))
+        {
+            // Compute over bytes up to '*' (NMEA XOR excludes '$' and '*')
+            const std::uint8_t computed =
+                calculateNMEAChecksum(mNMEAMessage.data(), star + 1);
+
+            mChecksum = parsed;
+            mChecksumValidFlag = (computed == parsed);
+        }
+    }
+
+    // Parse fields (your parseMessage should ignore checksum portion)
+    mFields = parseMessage(msg);
+
+    if (!mFields.empty() && mFields[0].size() >= 5)
+    {
+        mTalker  = mFields[0].substr(0, 2);
         mMessage = mFields[0].substr(2, 3);
     }
     else
     {
-        mTalker = "XX";
+        mTalker  = "XX";
         mMessage = "YYY";
     }
 }
@@ -72,7 +105,7 @@ bool NMEAExtractionStream::isChecksumValid() const
     return false;
 }
 
-bool NMEAExtractionStream::numberOfFields() const
+std::size_t NMEAExtractionStream::numberOfFields() const
 {
     return mFields.size();
 }
@@ -82,127 +115,112 @@ void NMEAExtractionStream::reset()
     mFieldIdx = 1;
 }
 
-const NMEAExtractionStream &NMEAExtractionStream::operator>>(int &value)
+NMEAExtractionStream& NMEAExtractionStream::operator>>(int& value)
 {
-    auto nows = skip_leading_whitespace(mFields[mFieldIdx]);
-    const char *start = nows.data();
-    std::size_t sz = nows.size();
-
-    int i;
-
-    char *endptr;
-    i = strtol(start, &endptr, 10);
-    value = i;
-
-#if 0
-    auto result = std::from_chars(start, start + sz, i);
-    if (result.ec == std::errc::invalid_argument)
+    const std::string_view f = nextField();
+    if (f.empty())
     {
-        value = std::numeric_limits<int>::min();
-    }
-    else
-    {
-        value = i;
-    }
-#endif
-
-    mFieldIdx++;
-
-    return *this;
-}
-
-const NMEAExtractionStream &NMEAExtractionStream::operator>>(unsigned int &value)
-{
-    auto nows = skip_leading_whitespace(mFields[mFieldIdx]);
-    const char *start = nows.data();
-    //std::size_t sz = nows.size();
-
-    int i;
-
-    char *endptr;
-    i = strtol(start, &endptr, 10);
-    value = i;
-
-    mFieldIdx++;
-
-    return *this;
-}
-
-const NMEAExtractionStream &NMEAExtractionStream::operator>>(double &value)
-{
-    auto nows = skip_leading_whitespace(mFields[mFieldIdx]);
-    const char *start = nows.data();
-    std::size_t sz = nows.size();
-
-    if (sz == 0) {
-        value = std::nan("");
-        mFieldIdx++;
+        mErrorFlag = true;
+        value = 0;
         return *this;
     }
 
-    double d;
-    char *end;
+    int v = 0;
+    const char* begin = f.data();
+    const char* end   = f.data() + f.size();
 
-    d = std::strtod(start, &end);
-    value = d;
-
-#if 0
-    auto result = std::from_chars(start, start + sz, d);
-    if (result.ec == std::errc::invalid_argument) {
-        value = std::nan("");
+    const auto res = std::from_chars(begin, end, v, 10);
+    if (res.ec != std::errc{} || res.ptr != end)
+    {
+        mErrorFlag = true;
+        value = 0;
+        return *this;
     }
-    else
-        value = d;
 
-#endif
-
-    mFieldIdx++;
-
+    value = v;
     return *this;
 }
 
-const NMEAExtractionStream &NMEAExtractionStream::operator>>(Register32Bits &value)
+NMEAExtractionStream& NMEAExtractionStream::operator>>(double& value)
 {
-    auto nows = skip_leading_whitespace(mFields[mFieldIdx]);
-    const char *start = nows.data();
-    std::size_t sz = nows.size();
+    const std::string_view f = nextField();
+    if (f.empty())
+    {
+        mErrorFlag = true;
+        value = 0.0;
+        return *this;
+    }
 
-    int i;
-    //auto result = std::from_chars(start, start + sz, i, 16);
-    char *endptr;
-    i = strtol(start, &endptr, 16);
+    std::string tmp(f);          // ensures null-terminated
+    char* endPtr = nullptr;
+    errno = 0;
 
-    //if (result.ec == std::errc::invalid_argument)
-    //{
-        // value will be empty, do 'if (value)' to tell if it is good.
-        //value = Register32Bits();
-    //}
-    //else
-    //{
-    //}
+    const double v = std::strtod(tmp.c_str(), &endPtr);
 
-    value = Register32Bits(i);
+    if (errno != 0 || endPtr == tmp.c_str() || *endPtr != '\0')
+    {
+        mErrorFlag = true;
+        value = 0.0;
+        return *this;
+    }
 
-    mFieldIdx++;
-
+    value = v;
     return *this;
 }
 
-const NMEAExtractionStream &NMEAExtractionStream::operator>>(std::string &value)
+NMEAExtractionStream& NMEAExtractionStream::operator>>(Register32Bits& value)
 {
-    std::string_view f = mFields[mFieldIdx];
+    const std::string_view f = nextField();
+    if (f.empty())
+    {
+        mErrorFlag = true;
+        value = Register32Bits{0};
+        return *this;
+    }
 
-    std::copy(f.begin(), f.end(), std::back_inserter(value));
+    std::string_view hex = f;
+    if (hex.size() >= 2 && hex[0] == '0' && (hex[1] == 'x' || hex[1] == 'X'))
+    {
+        hex.remove_prefix(2);
+    }
 
-    mFieldIdx++;
+    if (hex.empty())
+    {
+        mErrorFlag = true;
+        value = Register32Bits{0};
+        return *this;
+    }
 
+    for (char c : hex)
+    {
+        if (!isHexDigit(c))
+        {
+            mErrorFlag = true;
+            value = Register32Bits{0};
+            return *this;
+        }
+    }
+
+    std::uint32_t v = 0;
+    const auto res = std::from_chars(hex.data(), hex.data() + hex.size(), v, 16);
+    if (res.ec != std::errc{} || res.ptr != hex.data() + hex.size())
+    {
+        mErrorFlag = true;
+        value = Register32Bits{0};
+        return *this;
+    }
+
+    value = Register32Bits{v};
     return *this;
 }
 
-void NMEAExtractionStream::_extractPayload(const char *nmeaMessage)
+NMEAExtractionStream& NMEAExtractionStream::operator>>(std::string& value)
 {
-
+    const std::string_view f = nextField();
+    value.assign(f.begin(), f.end());
+    return *this;
 }
+
 
 // Function to split string based on a delimiter into a vector of string_views
 FieldStrings splitString(std::string_view str, char delim)
@@ -222,43 +240,94 @@ FieldStrings splitString(std::string_view str, char delim)
     return result;
 }
 
-// Function to parse the message and return a vector of fields
-FieldStrings parseMessage(std::string_view message)
+static std::string_view trimTrailing(std::string_view sv) noexcept
 {
-    //cout << "[parseMessage] message = '" << message << "'" << endl;
-    // Check for the starting '$' and the '*' before the checksum
+    while (!sv.empty())
+    {
+        const unsigned char c = static_cast<unsigned char>(sv.back());
+        if (c == '\0' || c == '\r' || c == '\n' || std::isspace(c))
+        {
+            sv.remove_suffix(1);
+            continue;
+        }
+        break;
+    }
+    return sv;
+}
 
-    if (message.front() != '$' || message.find('*') == std::string_view::npos) {
-        //throw std::invalid_argument("Invalid message format");
-        std::cerr << "MISSED A MESSAGE DUE TO INVALID FORMAT" << std::endl;
-        return FieldStrings {};
-        
+std::vector<std::string_view> parseMessage(std::string_view message)
+{
+    std::vector<std::string_view> fields;
+
+    message = trimTrailing(message);
+
+    // Must start with '$'
+    if (message.empty() || message.front() != '$')
+    {
+        // You can set an error flag here if you have one
+        return fields;
     }
 
-    // Find position of '*' which starts the checksum part
-    size_t checksumStart = message.rfind('*');
-    if (checksumStart == std::string_view::npos || checksumStart + 3 != message.size()) {
-        std::cerr << "MISSED A MESSAGE DUE TO INVALID CHECKSUM FORMAT" << std::endl;
-        //throw std::invalid_argument("Invalid checksum format");
-        return FieldStrings {};
+    // Ignore checksum portion (everything from '*' onward)
+    const std::size_t starPos = message.find('*');
+    if (starPos != std::string_view::npos)
+    {
+        message = message.substr(0, starPos);
+        message = trimTrailing(message);
     }
 
-    // Extract the checksum part (excluding '*')
-    std::string_view checksum = message.substr(checksumStart + 1, 2);
+    // Drop the leading '$' for tokenizing (fields[0] becomes TALKER_MSG)
+    std::string_view body = message.substr(1);
 
-    // Extract the main content between '$' and '*'
-    std::string_view content = message.substr(1, checksumStart - 1);
+    // Split by commas into string_view fields
+    std::size_t start = 0;
+    while (start <= body.size())
+    {
+        const std::size_t commaPos = body.find(',', start);
 
-    // Split the content into fields based on ','
-    return splitString(content, ',');
+        if (commaPos == std::string_view::npos)
+        {
+            // Last field (or only field)
+            fields.emplace_back(body.substr(start));
+            break;
+        }
+
+        fields.emplace_back(body.substr(start, commaPos - start));
+        start = commaPos + 1;
+
+        // Handle trailing comma (produces an empty final field)
+        if (start == body.size())
+        {
+            fields.emplace_back(std::string_view{});
+            break;
+        }
+    }
+
+    return fields;
 }
 
 
-std::string_view skip_leading_whitespace(std::string_view strv) {
+std::string_view skipLeadingWhitespace(std::string_view strv) {
     size_t pos = 0;
     while (pos < strv.length() && std::isspace(strv[pos])) {
         pos++;
     }
     strv.remove_prefix(pos);
     return strv;
+}
+
+bool parseHex2(std::string_view sv, std::uint8_t& out) noexcept
+{
+    if (sv.size() < 2) return false;
+    auto hexVal = [](char ch) -> int {
+        if (ch >= '0' && ch <= '9') return ch - '0';
+        if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+        if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+        return -1;
+    };
+    int hi = hexVal(sv[0]);
+    int lo = hexVal(sv[1]);
+    if (hi < 0 || lo < 0) return false;
+    out = static_cast<std::uint8_t>((hi << 4) | lo);
+    return true;
 }
