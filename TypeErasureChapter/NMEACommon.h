@@ -13,6 +13,7 @@
 #include <string>
 #include <ostream>
 #include <cstdint>
+#include <cstddef>
 
 class NMEAExtractionStream;
 
@@ -40,16 +41,19 @@ std::string toString(messageResult_t mr);
 std::string toString(memoryClass_t mc);
 
 /**
- * @brief calculateNMEAChecksum calculates checksum from after '$' (index 1)
- * to the last character. Assumes that nmeaMsg is $AABBB,f,f,f.
+ * @brief Calculate the NMEA 0183 checksum (XOR) for a sentence under construction.
  *
- * @param NmeaSentence
- * @return The checksum of the NMEA sentence
+ * Computes the XOR of all bytes after the leading '$' up to (but not including)
+ * the '*' checksum delimiter if present, otherwise up to @p length.
  *
- * @todo Make this function more robust, could easily crash depending on
- * message and termination character.
+ * @param data   Pointer to the beginning of the sentence buffer (expected to start with '$').
+ * @param length Number of valid bytes currently in the buffer.
+ * @return 8-bit XOR checksum value.
+ *
+ * @note This function is length-based and does not require null termination.
  */
-std::int8_t calculateNMEAChecksum(char *nmeaMsg, char terminationCharacter=0);
+std::uint8_t calculateNMEAChecksum(const std::byte* data, std::size_t length) noexcept;
+
 
 /**
  * @brief validateNMEAMessage
@@ -59,3 +63,23 @@ std::int8_t calculateNMEAChecksum(char *nmeaMsg, char terminationCharacter=0);
  * incorrect.
  */
 bool validateNMEAMessage(char* nmeaMsg);
+
+inline const char* toCharPtr(const std::byte* p) noexcept
+{
+    return reinterpret_cast<const char*>(p);
+}
+
+inline char* toCharPtr(std::byte* p) noexcept
+{
+    return reinterpret_cast<char*>(p);
+}
+
+inline std::byte toByte(char c) noexcept
+{
+    return static_cast<std::byte>(c);
+}
+
+inline bool isAscii(std::byte b, char c) noexcept
+{
+    return b == static_cast<std::byte>(c);
+}

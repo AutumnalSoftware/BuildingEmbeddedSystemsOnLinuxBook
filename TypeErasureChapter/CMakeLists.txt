@@ -5,11 +5,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SHARED_SOURCES
-    ImmutableBuffer.cpp
-    MutableBuffer.cpp
+    AnyNMEAMessage.h
     NMEACommon.cpp
+    NMEACommon.h
     NMEAExtractionStream.cpp
+    NMEAExtractionStream.h
     NMEAInsertionStream.cpp
+    NMEAInsertionStream.h
 )
 
 add_executable(typeErasureDemo
@@ -20,6 +22,16 @@ add_executable(typeErasureDemo
 add_executable(typeErasureTests
     tests.cpp
     ${SHARED_SOURCES}
+)
+
+target_include_directories(typeErasureDemo PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../
+)
+
+target_include_directories(typeErasureTests PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../
 )
 
 # If AnyNMEAMessage is header-only, nothing else needed.

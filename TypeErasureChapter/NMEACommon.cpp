@@ -13,6 +13,36 @@
 #include "NMEACommon.h"
 #include "NMEAExtractionStream.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <cstddef>
+
+std::uint8_t calculateNMEAChecksum(const std::byte* data,
+                                   std::size_t length) noexcept
+{
+    std::uint8_t checksum = 0;
+
+    // NMEA: XOR of bytes between '$' and '*', excluding both
+    // We assume:
+    //  - data[0] == '$'
+    //  - length is the number of valid bytes written so far
+    for (std::size_t i = 1; i < length; ++i)
+    {
+        const std::byte b = data[i];
+
+        if (b == static_cast<std::byte>('*'))
+        {
+            break;
+        }
+
+        checksum ^= static_cast<std::uint8_t>(b);
+    }
+
+    return checksum;
+}
+
+
+#if 0
 int8_t calculateNMEAChecksum(char* nmeaMsg, char terminationCharacter)
 {
     unsigned char checkSum = 0;
@@ -26,6 +56,7 @@ int8_t calculateNMEAChecksum(char* nmeaMsg, char terminationCharacter)
 
     return checkSum;
 }
+#endif
 
 bool validateNMEAMessage(char *nmeaMsg)
 {

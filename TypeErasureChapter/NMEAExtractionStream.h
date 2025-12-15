@@ -13,7 +13,7 @@
 #include <vector>
 #include <string>
 
-class ImmutableBuffer;
+class ByteView;
 class Register32Bits;
 
 using FieldStrings = std::vector<std::string_view>;
@@ -26,7 +26,7 @@ class NMEAExtractionStream
 public:
     NMEAExtractionStream() = delete;
 
-    explicit NMEAExtractionStream(const ImmutableBuffer &nmeaMessage);
+    explicit NMEAExtractionStream(const ByteView &nmeaMessage);
 
     /// @todo delete copy and move
 
@@ -51,7 +51,7 @@ public:
     const NMEAExtractionStream& operator>>(std::string& value);
 
 private:
-    const ImmutableBuffer& mNMEAMessage;
+    const ByteView& mNMEAMessage;
     bool mChecksumValidFlag {false};
 
     FieldStrings mFields;

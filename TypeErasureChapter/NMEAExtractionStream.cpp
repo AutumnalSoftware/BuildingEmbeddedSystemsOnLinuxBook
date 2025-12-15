@@ -16,7 +16,9 @@
 #include <cstdlib>
 #include <string>
 
-#include "ImmutableBuffer.h"
+#include "Common/ByteView.h"
+
+#include "NMEACommon.h"
 #include "NMEAExtractionStream.h"
 #include "Register32Bits.h"
 
@@ -29,10 +31,16 @@ FieldStrings parseMessage(std::string_view message);
 std::string_view skip_leading_whitespace(std::string_view strv);
 
 
-NMEAExtractionStream::NMEAExtractionStream(const ImmutableBuffer &nmeaMessage) :
+NMEAExtractionStream::NMEAExtractionStream(const ByteView &nmeaMessage) :
     mNMEAMessage(nmeaMessage)
 {
-    mFields = parseMessage(nmeaMessage.data());
+    //mFields = parseMessage(nmeaMessage.data());
+
+    mFields = parseMessage(std::string_view{
+        toCharPtr(nmeaMessage.data()),
+        nmeaMessage.size()
+    });
+
 
     //for (auto field : mFields)
         //cout << "** field = " << field << endl;

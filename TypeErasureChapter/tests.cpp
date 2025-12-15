@@ -9,8 +9,7 @@
 #include "AnyNMEAMessage.h"
 #include "NMEAInsertionStream.h"
 #include "NMEAExtractionStream.h"
-#include "MutableBuffer.h"
-#include "ImmutableBuffer.h"
+#include "Common/ByteView.h"
 
 using namespace std;
 
@@ -131,7 +130,7 @@ static void testSerialization()
     AnyNMEAMessage m1("MW", gga1);
 
     char buffer[1024]{};
-    MutableBuffer mb(buffer, sizeof(buffer));
+    MutableByteView mb(buffer, sizeof(buffer));
 
     NMEAInsertionStream nis(mb, "GT", "GGA");
     m1.serialize(nis);

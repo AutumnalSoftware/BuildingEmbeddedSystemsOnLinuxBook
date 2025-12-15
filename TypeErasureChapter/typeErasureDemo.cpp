@@ -9,8 +9,7 @@
 #include "NMEAInsertionStream.h"
 #include "NMEAExtractionStream.h"
 
-#include "MutableBuffer.h"
-#include "ImmutableBuffer.h"
+#include "Common/ByteView.h"
 
 using namespace std;
 
@@ -108,7 +107,7 @@ static void demoSerialization()
     AnyNMEAMessage m1("MW", gga1);
 
     char buffer[1024]{};
-    MutableBuffer mb(buffer, sizeof(buffer));
+    MutableByteView mb(buffer, sizeof(buffer));
 
     // Note: talker/message here are for the output sentence framing,
     // while AnyNMEAMessage carries its own talker/message metadata too.

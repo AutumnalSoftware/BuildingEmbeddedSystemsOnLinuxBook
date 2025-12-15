@@ -16,7 +16,8 @@
 
 #include "traits.h"
 
-class MutableBuffer;
+#include "Common/ByteView.h"
+
 class Register32Bits;
 
 /**
@@ -61,7 +62,7 @@ public:
 
     /// @todo delete copy and move
 
-    NMEAInsertionStream(MutableBuffer& buffer, const char *talker, const char *msg);
+    NMEAInsertionStream(MutableByteView& buffer, const char *talker, const char *msg);
 
     NMEAInsertionStream& operator<<(const FloatFormat& fmt);
 
@@ -100,12 +101,16 @@ public:
     void resetBuffer();
 
 private:
-    MutableBuffer& mBuffer;
-    std::size_t mBufferSize;
-    char* mCurrentPtr;
-    uint32_t mLen {0};
-    const char* mTalker;
-    const char* mMsg;
-    std::string mFloatFormat { "%0.1f" };
-    std::uint8_t mBase{10};
+    MutableByteView mBuffer;
+    std::size_t     mCapacity{0};
+    std::byte*      mBeginPtr{nullptr};    // Start of the sentence in the output buffer
+    std::byte*      mCurrentPtr{nullptr};  // Current write cursor
+    std::size_t     mLen{0};               // Bytes written so far
+
+    const char*     mTalker{nullptr};
+    const char*     mMsg{nullptr};
+
+    std::string     mFloatFormat{"%0.1f"};
+    std::uint8_t    mBase{10};
+
 };
