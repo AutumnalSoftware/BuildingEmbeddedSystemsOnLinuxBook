@@ -71,16 +71,25 @@ NMEAExtractionStream &operator>>(NMEAExtractionStream &stream, RMCMessage &msg)
     return stream;
 }
 
-template<>
+
+/// Requires NMEATraits<T> specialization; intended as a convenience.
+template <>
 struct NMEATraits<GGAMessage>
 {
-    static std::string messageName() { return "GGA"; }
+    static std::string_view messageName()
+    {
+        return "GGA";
+    }
 };
 
-template<>
+/// Requires NMEATraits<T> specialization; intended as a convenience.
+template <>
 struct NMEATraits<RMCMessage>
 {
-    static std::string messageName() { return "RMC"; }
+    static std::string_view messageName()
+    {
+        return "RMC";
+    }
 };
 
 static void testQueryAndAccessors()
@@ -91,7 +100,7 @@ static void testQueryAndAccessors()
     AnyNMEAMessage m1("MW", gga1);
     AnyNMEAMessage m2("MW", "RMC", rmc1);
 
-    assert(!m1.isEmpty());
+    assert(!m1.empty());
     assert(static_cast<bool>(m1));
 
     assert(m1.isType<GGAMessage>());
@@ -105,7 +114,7 @@ static void testQueryAndAccessors()
 
     // Empty message should be false
     AnyNMEAMessage empty;
-    assert(empty.isEmpty());
+    assert(empty.empty());
     assert(!static_cast<bool>(empty));
 }
 
@@ -127,17 +136,28 @@ static void testCopy()
 static void testSerialization()
 {
     GGAMessage gga1{1, 43.34, "HELLO"};
-    AnyNMEAMessage m1("MW", gga1);
+
+    // Use explicit talker + message name to avoid requiring NMEATraits<GGAMessage>.
+    AnyNMEAMessage m1("GT", "GGA", gga1);
 
     char buffer[1024]{};
     MutableByteView mb(buffer, sizeof(buffer));
 
+    // Stream owns framing ($ + talker + msg, commas, checksum, etc.)
     NMEAInsertionStream nis(mb, "GT", "GGA");
-    m1.serialize(nis);
 
+    // Payload only
+    m1.serializePayload(nis);
+
+    // Finalize framing/checksum and remove trailing commas
+    nis << NMEAInsertionStream::EndMsg();
+
+    // Basic sanity: something was written.
     assert(std::strlen(buffer) > 0);
-    // Optional, depending on your final sentence format:
-    // assert(std::strstr(buffer, "GGA") != nullptr);
+
+    // Optional: check that talker/message appear in the sentence.
+    assert(std::strstr(buffer, "GGA") != nullptr);
+    assert(std::strstr(buffer, "GT") != nullptr);
 }
 
 int main()

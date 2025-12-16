@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
 
+#include <array>
+#include <cstddef>
+#include <cstring>
 #include <iostream>
 #include <string>
 
 #include "AnyNMEAMessage.h"
-
-#include "NMEAInsertionStream.h"
-#include "NMEAExtractionStream.h"
-
 #include "Common/ByteView.h"
+#include "NMEAExtractionStream.h"
+#include "NMEAInsertionStream.h"
 
-using namespace std;
+//-----------------------------------------------------------------------------
+// Strawman messages
+//-----------------------------------------------------------------------------
 
-//
-// Strawmen NMEA messages to keep things simple.
-//
 struct GGAMessage
 {
     int i{42};
@@ -25,47 +25,37 @@ struct GGAMessage
 
 struct RMCMessage
 {
-    double d{456.789};
-    int i{105};
+    int a{7};
+    double b{3.14};
+    std::string c{"RMC"};
 };
 
-// Pretty-print helpers (demo-friendly)
-ostream &operator<<(ostream &str, const GGAMessage &msg)
+std::ostream& operator<<(std::ostream& os, const GGAMessage& msg)
 {
-    str << "GGA: i = " << msg.i << ", d = " << msg.d << ", s = " << msg.s;
-    return str;
+    os << "GGAMessage{ i=" << msg.i << ", d=" << msg.d << ", s=\"" << msg.s << "\" }";
+    return os;
 }
 
-ostream &operator<<(ostream &str, const RMCMessage &msg)
+std::ostream& operator<<(std::ostream& os, const RMCMessage& msg)
 {
-    str << "RMC: d = " << msg.d << ", i = " << msg.i;
-    return str;
+    os << "RMCMessage{ a=" << msg.a << ", b=" << msg.b << ", c=\"" << msg.c << "\" }";
+    return os;
 }
 
-// NMEA traits for AnyNMEAMessage
-template<>
-struct NMEATraits<GGAMessage>
+//-----------------------------------------------------------------------------
+// NMEA stream operators (PAYLOAD ONLY)
+// Note: NO operator<<<T> templates. NO EndMsg here.
+//-----------------------------------------------------------------------------
+
+NMEAInsertionStream& operator<<(NMEAInsertionStream& stream, const GGAMessage& msg)
 {
-    static std::string messageName() { return "GGA"; }
-};
+    stream << msg.i;
+    stream << msg.d;
+    stream << msg.s;
+    return stream;
+}
 
-template<>
-struct NMEATraits<RMCMessage>
-{
-    static std::string messageName() { return "RMC"; }
-};
-
-// -----------------------------------------------------------------------------
-// IMPORTANT:
-// Your linker error was looking for:
-//   operator>><GGAMessage>(NMEAExtractionStream&, GGAMessage&)
-// which means there is a *templated* operator>> declared somewhere.
-// These explicit specializations provide the missing definitions.
-// If the template operators are in a namespace, put these specializations there.
-// -----------------------------------------------------------------------------
-
-template<>
-NMEAExtractionStream &operator>><GGAMessage>(NMEAExtractionStream &stream, GGAMessage &msg)
+NMEAExtractionStream& operator>>(NMEAExtractionStream& stream, GGAMessage& msg)
 {
     stream >> msg.i;
     stream >> msg.d;
@@ -73,53 +63,110 @@ NMEAExtractionStream &operator>><GGAMessage>(NMEAExtractionStream &stream, GGAMe
     return stream;
 }
 
-template<>
-NMEAExtractionStream &operator>><RMCMessage>(NMEAExtractionStream &stream, RMCMessage &msg)
+NMEAInsertionStream& operator<<(NMEAInsertionStream& stream, const RMCMessage& msg)
 {
-    stream >> msg.i;
-    stream >> msg.d;
+    stream << msg.a;
+    stream << msg.b;
+    stream << msg.c;
     return stream;
 }
 
-// Optional symmetry: explicit insertion specializations too (harmless if your code uses them)
-template<>
-NMEAInsertionStream &operator<<<GGAMessage>(NMEAInsertionStream &stream, const GGAMessage &msg)
+NMEAExtractionStream& operator>>(NMEAExtractionStream& stream, RMCMessage& msg)
 {
-    stream << msg.i;
-    stream << msg.d;
-    stream << msg.s;
-    stream << NMEAInsertionStream::EndMsg();
+    stream >> msg.a;
+    stream >> msg.b;
+    stream >> msg.c;
     return stream;
 }
 
-template<>
-NMEAInsertionStream &operator<<<RMCMessage>(NMEAInsertionStream &stream, const RMCMessage &msg)
+//-----------------------------------------------------------------------------
+// Demo helpers
+//-----------------------------------------------------------------------------
+
+static void demoQueryAndAccessors()
 {
-    stream << msg.i;
-    stream << msg.d;
-    stream << NMEAInsertionStream::EndMsg();
-    return stream;
+    std::cout << "\n--- demoQueryAndAccessors ---\n";
+
+    GGAMessage gga;
+    AnyNMEAMessage m1("GP", "GGA", gga);
+
+    std::cout << "talker=" << m1.getTalker()
+              << " name=" << m1.getMessageName()
+              << " type=" << m1.type().name()
+              << "\n";
+
+    if (m1.isType<GGAMessage>())
+    {
+        const GGAMessage& ref = m1.get<GGAMessage>();
+        std::cout << "payload: " << ref << "\n";
+    }
+
+    AnyNMEAMessage empty;
+    std::cout << "empty? " << (empty.empty() ? "yes" : "no") << "\n";
 }
 
 static void demoSerialization()
 {
-    GGAMessage gga1{1, 43.34, "HELLO"};
-    AnyNMEAMessage m1("MW", gga1);
+    std::cout << "\n--- demoSerialization ---\n";
 
-    char buffer[1024]{};
-    MutableByteView mb(buffer, sizeof(buffer));
+    GGAMessage gga;
+    AnyNMEAMessage m1("GP", "GGA", gga);
 
-    // Note: talker/message here are for the output sentence framing,
-    // while AnyNMEAMessage carries its own talker/message metadata too.
-    NMEAInsertionStream nis(mb, "GT", "GGA");
-    m1.serialize(nis);
+    // Backing store for the serialized sentence.
+    std::array<std::byte, 256> backing{};
+    MutableByteView out = asWritableBytes(backing);
 
-    cout << "Serialized GGA message is " << buffer << endl;
+    // IMPORTANT: Your inserter needs talker + msg at construction time.
+    // It will write "$" + talker + msg + "," ... etc as part of framing.
+    // Our AnyNMEAMessage writes payload only.
+    NMEAInsertionStream nis(out, "GP", "GGA");
+
+    // Payload only:
+    m1.serializePayload(nis);
+
+    // End message / checksum is also framing policy:
+    nis << NMEAInsertionStream::EndMsg();
+
+    // I can’t print the sentence without a "bytes written" / "view" API
+    // from NMEAInsertionStream. Once you show that, we’ll add:
+    //   ByteView sentence = nis.view();
+    //   std::cout << std::string_view((const char*)sentence.data(), sentence.size()) << "\n";
+    std::cout << "(serialized GGAMessage payload and wrote EndMsg)\n";
 }
+
+static void demoDeserialization()
+{
+    std::cout << "\n--- demoDeserialization ---\n";
+
+    // Use a literal sentence. NOTE: checksum is placeholder; if extractor enforces it,
+    // use a real checksum’d sentence from your inserter once we can print it.
+    const char* sentence = "$GPGGA,42,123.456,STRING*00\r\n";
+    const std::size_t len = std::strlen(sentence);
+
+    ByteView in = asBytes(sentence, len);
+    NMEAExtractionStream ex(in);
+
+    // Since we already know header is GGA, we instantiate with GGAMessage payload.
+    AnyNMEAMessage m("GP", "GGA", GGAMessage{});
+    m.deserializePayload(ex);
+
+    std::cout << "talker=" << ex.getTalker()
+              << " msg=" << ex.getMessage()
+              << " fields=" << ex.numberOfFields()
+              << " checksumValid=" << (ex.isChecksumValid() ? "yes" : "no")
+              << "\n";
+
+    std::cout << "decoded: " << m.get<GGAMessage>() << "\n";
+}
+
+//-----------------------------------------------------------------------------
+// main
+//-----------------------------------------------------------------------------
 
 int main()
 {
+    demoQueryAndAccessors();
     demoSerialization();
+    demoDeserialization();
     return 0;
 }
-
