@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/typeErasureDemo.dir/typeErasureDemo.cpp.o CMakeFiles/typeErasureDemo.dir/NMEACommon.cpp.o CMakeFiles/typeErasureDemo.dir/NMEAExtractionStream.cpp.o CMakeFiles/typeErasureDemo.dir/NMEAInsertionStream.cpp.o -o typeErasureDemo 
