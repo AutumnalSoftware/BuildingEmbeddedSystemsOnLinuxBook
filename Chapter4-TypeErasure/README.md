@@ -1,20 +1,22 @@
 # TypeErasureExample
-This directory contains example code demonstrating type erasure using external polymorphism.
 
-Two simple example NMEA data structs are defined and used to demonstrate putting type erased NMEA sentences into a vector.
+This directory contains a minimal example demonstrating **type erasure via external polymorphism**.
 
-To build:
+Two simple NMEA sentence data structures are defined and stored by value in a single
+`std::vector` using a type-erased wrapper. The example shows how unrelated concrete
+types can share common behavior without inheritance or virtual functions.
 
+## Build
+
+```bash
 mkdir build
 cmake -S . -B build
-cd build
-make
+cmake --build build
 
-Then:
-
+# Run
 ./TypeErasureDemo
 
-Output should be:
-
+# Expected Output
 talker=GP type=POS checksumValid=true
 talker=GP type=STS checksumValid=true
+
