@@ -7,6 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(TestSerialization main.cpp)
 
+target_include_directories(TestSerialization
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+)
+
 include(GNUInstallDirs)
 install(TARGETS TestSerialization
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

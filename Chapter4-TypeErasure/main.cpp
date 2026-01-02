@@ -27,7 +27,7 @@ struct ExampleStatusSentence
     }
 };
 
-int main(int argc, char** argv)
+int main()
 {
     std::vector<AnyNmeaSentence> sentences;
 
@@ -47,4 +47,6 @@ int main(int argc, char** argv)
             << " checksumValid=" << (s.isChecksumValid() ? "true" : "false")
             << "\n";
     }
+
+    return 0;
 }

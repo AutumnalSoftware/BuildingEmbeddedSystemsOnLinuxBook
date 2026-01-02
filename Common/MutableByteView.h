@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImmutableByteView.h"
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -55,9 +56,9 @@ public:
      * Allows MutableByteView to be passed to read-only APIs
      * without copying or allocation.
      */
-    operator ByteView() const noexcept
+    operator ImmutableByteView() const noexcept
     {
-        return ByteView(mData, mSize);
+        return ImmutableByteView(mData, mSize);
     }
 
 private:

@@ -3,7 +3,7 @@
 //
 // BinaryDataStream demo (C++17, embedded-friendly, no exceptions)
 //
-// - Two streams: BinaryWriteStream (MutableBuffer) and BinaryReadStream (ImmutableBuffer)
+// - Two streams: BinaryWriteStream (MutableByteView) and BinaryReadStream (ByteView)
 // - Chaining readX()/writeX() (latched error, no partial writes/reads)
 // - Endianness: ctor detects host endianness, you specify wire endianness
 // - Size optimization for sized fields (strings/blobs/vectors):
@@ -12,8 +12,13 @@
 //                  and the remaining 3 bytes store the size as a 24-bit unsigned value.
 //                  This supports sizes 255..16,777,215 (0x00FF'FFFF).
 //
+// Checksums:
+// - Rolling XOR (NMEA-style) for accidental corruption detection (not security).
+// - Header checksum covers the fixed header bytes with headerChecksum treated as 0.
+// - Payload checksum covers payload bytes.
+//
 // Notes:
-// - Replace the sample MutableBuffer / ImmutableBuffer below with your real ones.
+// - Uses Mark's Common types: ByteView / MutableByteView (C++17).
 // - This file is intentionally explicit and repetitive (good for embedded and for teaching).
 
 #include <cstdint>
@@ -23,110 +28,53 @@
 #include <string_view>
 #include <vector>
 #include <iostream>
-#include <iomanip>
 #include <cassert>
+#include <type_traits>
+
+// For offsetof
+#include <cstddef>
+
+#include "ImmutableByteView.h"
+#include "MutableByteView.h"
 
 namespace bds
 {
 
 //------------------------------------------------------------------------------
-// Minimal buffer types for a self-contained demo.
-// Replace these with your actual MutableBuffer / ImmutableBuffer.
-//
-// Requirements used by the streams:
-//   - data() -> uint8_t* / const uint8_t*
-//   - size() -> size_t
-//   - slice(offset, len) -> same buffer type, non-owning view
+// Helpers for working with std::byte buffers
 //------------------------------------------------------------------------------
 
-class ImmutableBuffer;
-
-class MutableBuffer
+inline uint8_t* u8(MutableByteView b) noexcept
 {
-public:
-    MutableBuffer()
-        : m_data(nullptr)
-        , m_size(0)
-    {
-    }
+    return reinterpret_cast<uint8_t*>(b.data());
+}
 
-    MutableBuffer(uint8_t* data, std::size_t size)
-        : m_data(data)
-        , m_size(size)
-    {
-    }
-
-    uint8_t* data()
-    {
-        return m_data;
-    }
-
-    const uint8_t* data() const
-    {
-        return m_data;
-    }
-
-    std::size_t size() const
-    {
-        return m_size;
-    }
-
-    MutableBuffer slice(std::size_t offset, std::size_t len) const
-    {
-        if (offset > m_size)
-        {
-            return MutableBuffer();
-        }
-        const std::size_t avail = m_size - offset;
-        const std::size_t n = (len <= avail) ? len : avail;
-        return MutableBuffer(m_data + offset, n);
-    }
-
-private:
-    uint8_t* m_data;
-    std::size_t m_size;
-};
-
-class ImmutableBuffer
+inline const uint8_t* u8(ImmutableByteView b) noexcept
 {
-public:
-    ImmutableBuffer()
-        : m_data(nullptr)
-        , m_size(0)
-    {
-    }
+    return reinterpret_cast<const uint8_t*>(b.data());
+}
 
-    ImmutableBuffer(const uint8_t* data, std::size_t size)
-        : m_data(data)
-        , m_size(size)
+inline MutableByteView subview(MutableByteView b, std::size_t offset, std::size_t len) noexcept
+{
+    if (offset > b.size())
     {
+        return MutableByteView();
     }
+    const std::size_t avail = b.size() - offset;
+    const std::size_t n = (len <= avail) ? len : avail;
+    return MutableByteView(b.data() + offset, n);
+}
 
-    const uint8_t* data() const
+inline ImmutableByteView subview(ImmutableByteView b, std::size_t offset, std::size_t len) noexcept
+{
+    if (offset > b.size())
     {
-        return m_data;
+        return ImmutableByteView();
     }
-
-    std::size_t size() const
-    {
-        return m_size;
-    }
-
-    ImmutableBuffer slice(std::size_t offset, std::size_t len) const
-    {
-        if (offset > m_size)
-        {
-            return ImmutableBuffer();
-        }
-        const std::size_t avail = m_size - offset;
-        const std::size_t n = (len <= avail) ? len : avail;
-        return ImmutableBuffer(m_data + offset, n);
-    }
-
-private:
-    const uint8_t* m_data;
-    std::size_t m_size;
-};
+    const std::size_t avail = b.size() - offset;
+    const std::size_t n = (len <= avail) ? len : avail;
+    return ImmutableByteView(b.data() + offset, n);
+}
 
 //------------------------------------------------------------------------------
 // Endianness
@@ -142,7 +90,6 @@ inline Endianness detectHostEndianness() noexcept
 {
     const uint32_t x = 0x01020304u;
     const uint8_t* p = reinterpret_cast<const uint8_t*>(&x);
-    // If first byte is 0x04, least significant byte comes first => little endian.
     return (p[0] == 0x04) ? Endianness::Little : Endianness::Big;
 }
 
@@ -163,17 +110,36 @@ enum class StreamError : uint8_t
 // Utility: safe copy with optional byte reversal
 //------------------------------------------------------------------------------
 
-inline void copyForward(uint8_t* dst, const uint8_t* src, std::size_t n)
+inline void copyForward(uint8_t* dst, const uint8_t* src, std::size_t n) noexcept
 {
     std::memcpy(dst, src, n);
 }
 
-inline void copyReversed(uint8_t* dst, const uint8_t* src, std::size_t n)
+inline void copyReversed(uint8_t* dst, const uint8_t* src, std::size_t n) noexcept
 {
     for (std::size_t i = 0; i < n; ++i)
     {
         dst[i] = src[n - 1 - i];
     }
+}
+
+//------------------------------------------------------------------------------
+// Rolling XOR checksum (NMEA-style). Corruption detection, not security.
+//------------------------------------------------------------------------------
+
+inline uint8_t xorChecksum(const uint8_t* data, std::size_t n) noexcept
+{
+    uint8_t c = 0;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        c ^= data[i];
+    }
+    return c;
+}
+
+inline uint8_t xorChecksum(ImmutableByteView b) noexcept
+{
+    return xorChecksum(u8(b), b.size());
 }
 
 //------------------------------------------------------------------------------
@@ -183,7 +149,7 @@ inline void copyReversed(uint8_t* dst, const uint8_t* src, std::size_t n)
 class BinaryWriteStream
 {
 public:
-    explicit BinaryWriteStream(MutableBuffer buffer,
+    explicit BinaryWriteStream(MutableByteView buffer,
                                Endianness wireEndianness = Endianness::Little,
                                uint32_t maxSizedField = 0x00FFFFFFu) noexcept
         : m_buf(buffer)
@@ -196,20 +162,10 @@ public:
     {
     }
 
-    bool ok() const noexcept
-    {
-        return m_err == StreamError::None;
-    }
+    bool ok() const noexcept { return m_err == StreamError::None; }
+    StreamError error() const noexcept { return m_err; }
 
-    StreamError error() const noexcept
-    {
-        return m_err;
-    }
-
-    std::size_t bytesWritten() const noexcept
-    {
-        return m_pos;
-    }
+    std::size_t bytesWritten() const noexcept { return m_pos; }
 
     std::size_t remaining() const noexcept
     {
@@ -228,24 +184,16 @@ public:
         return writeUInt8(static_cast<uint8_t>(v));
     }
 
-    BinaryWriteStream& writeUInt16(uint16_t v) noexcept
-    {
-        return writeScalar(v);
-    }
+    BinaryWriteStream& writeUInt16(uint16_t v) noexcept { return writeScalar(v); }
 
     BinaryWriteStream& writeInt16(int16_t v) noexcept
     {
-        const uint16_t u = 0;
-        (void)u;
         uint16_t tmp;
         std::memcpy(&tmp, &v, sizeof(tmp));
         return writeUInt16(tmp);
     }
 
-    BinaryWriteStream& writeUInt32(uint32_t v) noexcept
-    {
-        return writeScalar(v);
-    }
+    BinaryWriteStream& writeUInt32(uint32_t v) noexcept { return writeScalar(v); }
 
     BinaryWriteStream& writeInt32(int32_t v) noexcept
     {
@@ -254,10 +202,7 @@ public:
         return writeUInt32(tmp);
     }
 
-    BinaryWriteStream& writeUInt64(uint64_t v) noexcept
-    {
-        return writeScalar(v);
-    }
+    BinaryWriteStream& writeUInt64(uint64_t v) noexcept { return writeScalar(v); }
 
     BinaryWriteStream& writeInt64(int64_t v) noexcept
     {
@@ -275,7 +220,7 @@ public:
     BinaryWriteStream& writeFloat(float v) noexcept
     {
         uint32_t bits;
-        static_assert(sizeof(bits) == sizeof(v), "float must be 32-bit");
+        static_assert(sizeof(bits) == sizeof(v), "float must be 32-bit IEEE-754");
         std::memcpy(&bits, &v, sizeof(bits));
         return writeUInt32(bits);
     }
@@ -283,19 +228,17 @@ public:
     BinaryWriteStream& writeDouble(double v) noexcept
     {
         uint64_t bits;
-        static_assert(sizeof(bits) == sizeof(v), "double must be 64-bit");
+        static_assert(sizeof(bits) == sizeof(v), "double must be 64-bit IEEE-754");
         std::memcpy(&bits, &v, sizeof(bits));
         return writeUInt64(bits);
     }
 
     // ---- Sized field encoding (size optimization) ----
     //
-    // Narrow size: 1 byte (0..254)
-    // Wide size:   4 bytes total:
-    //    byte0 = 0xFF
-    //    byte1..3 = size24 in big-endian (most significant first)
+    // Narrow: 1 byte (0..254)
+    // Wide:   4 bytes total: 0xFF + 24-bit size in big-endian
     //
-    // This keeps the "0xFF is part of the 4 bytes" property AND avoids an extra flag byte.
+    // Note: 0xFF is part of the 4 bytes, not an extra flag byte.
 
     BinaryWriteStream& writeSize(uint32_t n) noexcept
     {
@@ -304,7 +247,7 @@ public:
             return *this;
         }
 
-        if (n > m_maxSizedField)
+        if (n > m_maxSizedField || n > 0x00FFFFFFu)
         {
             m_err = StreamError::SizeLimitExceeded;
             return *this;
@@ -315,14 +258,6 @@ public:
             return writeUInt8(static_cast<uint8_t>(n));
         }
 
-        // Wide size encoding supports up to 0x00FFFFFF (24-bit).
-        if (n > 0x00FFFFFFu)
-        {
-            m_err = StreamError::SizeLimitExceeded;
-            return *this;
-        }
-
-        // 4 bytes total: 0xFF + 3 bytes of size
         uint8_t tmp[4];
         tmp[0] = 0xFF;
         tmp[1] = static_cast<uint8_t>((n >> 16) & 0xFF);
@@ -332,7 +267,7 @@ public:
         return writeRawBytes(tmp, 4);
     }
 
-    BinaryWriteStream& writeBytes(ImmutableBuffer bytes) noexcept
+    BinaryWriteStream& writeBytes(ImmutableByteView bytes) noexcept
     {
         if (!ok())
         {
@@ -344,18 +279,13 @@ public:
             return *this;
         }
 
-        std::memcpy(m_buf.data() + m_pos, bytes.data(), bytes.size());
+        std::memcpy(u8(m_buf) + m_pos, bytes.data(), bytes.size());
         m_pos += bytes.size();
         return *this;
     }
 
     BinaryWriteStream& writeString(std::string_view s) noexcept
     {
-        if (!ok())
-        {
-            return *this;
-        }
-
         writeSize(static_cast<uint32_t>(s.size()));
         if (!ok())
         {
@@ -383,13 +313,14 @@ private:
         uint8_t tmp[sizeof(T)];
         std::memcpy(tmp, &value, n);
 
+        uint8_t* dst = u8(m_buf) + m_pos;
         if (m_swap)
         {
-            copyReversed(m_buf.data() + m_pos, tmp, n);
+            copyReversed(dst, tmp, n);
         }
         else
         {
-            copyForward(m_buf.data() + m_pos, tmp, n);
+            copyForward(dst, tmp, n);
         }
 
         m_pos += n;
@@ -408,7 +339,7 @@ private:
             return *this;
         }
 
-        std::memcpy(m_buf.data() + m_pos, data, n);
+        std::memcpy(u8(m_buf) + m_pos, data, n);
         m_pos += n;
         return *this;
     }
@@ -424,7 +355,7 @@ private:
     }
 
 private:
-    MutableBuffer m_buf;
+    MutableByteView m_buf;
     std::size_t m_pos;
     StreamError m_err;
 
@@ -442,7 +373,7 @@ private:
 class BinaryReadStream
 {
 public:
-    explicit BinaryReadStream(ImmutableBuffer buffer,
+    explicit BinaryReadStream(ImmutableByteView buffer,
                               Endianness wireEndianness = Endianness::Little,
                               uint32_t maxSizedField = 0x00FFFFFFu) noexcept
         : m_buf(buffer)
@@ -455,20 +386,10 @@ public:
     {
     }
 
-    bool ok() const noexcept
-    {
-        return m_err == StreamError::None;
-    }
+    bool ok() const noexcept { return m_err == StreamError::None; }
+    StreamError error() const noexcept { return m_err; }
 
-    StreamError error() const noexcept
-    {
-        return m_err;
-    }
-
-    std::size_t bytesRead() const noexcept
-    {
-        return m_pos;
-    }
+    std::size_t bytesRead() const noexcept { return m_pos; }
 
     std::size_t remaining() const noexcept
     {
@@ -487,7 +408,8 @@ public:
         {
             return *this;
         }
-        out = m_buf.data()[m_pos];
+
+        out = u8(m_buf)[m_pos];
         m_pos += 1;
         return *this;
     }
@@ -503,10 +425,7 @@ public:
         return *this;
     }
 
-    BinaryReadStream& readUInt16(uint16_t& out) noexcept
-    {
-        return readScalar(out);
-    }
+    BinaryReadStream& readUInt16(uint16_t& out) noexcept { return readScalar(out); }
 
     BinaryReadStream& readInt16(int16_t& out) noexcept
     {
@@ -519,10 +438,7 @@ public:
         return *this;
     }
 
-    BinaryReadStream& readUInt32(uint32_t& out) noexcept
-    {
-        return readScalar(out);
-    }
+    BinaryReadStream& readUInt32(uint32_t& out) noexcept { return readScalar(out); }
 
     BinaryReadStream& readInt32(int32_t& out) noexcept
     {
@@ -535,10 +451,7 @@ public:
         return *this;
     }
 
-    BinaryReadStream& readUInt64(uint64_t& out) noexcept
-    {
-        return readScalar(out);
-    }
+    BinaryReadStream& readUInt64(uint64_t& out) noexcept { return readScalar(out); }
 
     BinaryReadStream& readInt64(int64_t& out) noexcept
     {
@@ -584,7 +497,7 @@ public:
         return *this;
     }
 
-    // ---- Size decoding (matches writeSize) ----
+    // ---- Size decoding ----
 
     BinaryReadStream& readSize(uint32_t& out) noexcept
     {
@@ -598,26 +511,24 @@ public:
             return *this;
         }
 
-        const uint8_t first = m_buf.data()[m_pos];
+        const uint8_t first = u8(m_buf)[m_pos];
 
         if (first <= 254u)
         {
-            // Narrow form
             out = static_cast<uint32_t>(first);
             m_pos += 1;
             return *this;
         }
 
-        // Wide form: 4 bytes total, first byte 0xFF, next 3 bytes size24 big-endian.
         if (!ensureAvailable(4))
         {
             return *this;
         }
 
-        const uint8_t b0 = m_buf.data()[m_pos + 0];
-        const uint8_t b1 = m_buf.data()[m_pos + 1];
-        const uint8_t b2 = m_buf.data()[m_pos + 2];
-        const uint8_t b3 = m_buf.data()[m_pos + 3];
+        const uint8_t b0 = u8(m_buf)[m_pos + 0];
+        const uint8_t b1 = u8(m_buf)[m_pos + 1];
+        const uint8_t b2 = u8(m_buf)[m_pos + 2];
+        const uint8_t b3 = u8(m_buf)[m_pos + 3];
 
         if (b0 != 0xFF)
         {
@@ -629,15 +540,9 @@ public:
                            | (static_cast<uint32_t>(b2) << 8)
                            | (static_cast<uint32_t>(b3));
 
-        if (n <= 254u)
+        if (n <= 254u || n > m_maxSizedField)
         {
             m_err = StreamError::InvalidData;
-            return *this;
-        }
-
-        if (n > m_maxSizedField)
-        {
-            m_err = StreamError::SizeLimitExceeded;
             return *this;
         }
 
@@ -647,7 +552,7 @@ public:
     }
 
     // Pass-through view (no decoding)
-    BinaryReadStream& readBytesView(uint32_t n, ImmutableBuffer& outView) noexcept
+    BinaryReadStream& readBytesView(uint32_t n, ImmutableByteView& outView) noexcept
     {
         if (!ok())
         {
@@ -659,7 +564,7 @@ public:
             return *this;
         }
 
-        outView = m_buf.slice(m_pos, n);
+        outView = subview(m_buf, m_pos, n);
         m_pos += n;
         return *this;
     }
@@ -678,7 +583,7 @@ public:
             return *this;
         }
 
-        const char* p = reinterpret_cast<const char*>(m_buf.data() + m_pos);
+        const char* p = reinterpret_cast<const char*>(u8(m_buf) + m_pos);
         out = std::string_view(p, n);
         m_pos += n;
         return *this;
@@ -700,7 +605,7 @@ private:
         }
 
         uint8_t tmp[sizeof(T)];
-        const uint8_t* src = m_buf.data() + m_pos;
+        const uint8_t* src = u8(m_buf) + m_pos;
 
         if (m_swap)
         {
@@ -727,7 +632,7 @@ private:
     }
 
 private:
-    ImmutableBuffer m_buf;
+    ImmutableByteView m_buf;
     std::size_t m_pos;
     StreamError m_err;
 
@@ -739,71 +644,117 @@ private:
 };
 
 //------------------------------------------------------------------------------
-// Fixed-size header (transport framing)
+// Fixed-size framing header with checksums
+//
+// Header wire endianness is fixed by spec; payload endianness declared in header.
+// Reserved fields/bits must be zero in v1 and ignored by receivers.
 //------------------------------------------------------------------------------
 
-struct MessageHeader
+static constexpr Endianness HeaderWireEndianness = Endianness::Little;
+
+struct MessageHeaderV1
 {
+    uint8_t  version = 1;
+    uint8_t  headerSize = 0;       // = sizeof(MessageHeaderV1)
+    uint8_t  payloadEndian = 0;    // 0=Little, 1=Big
+    uint8_t  headerFlags = 0;      // reserved bits (must be 0 in v1)
+
     uint16_t serviceId = 0;
     uint16_t messageType = 0;
-    uint32_t payloadSize = 0; // always 4 bytes, fixed header size
-};
 
-inline BinaryWriteStream& writeHeader(BinaryWriteStream& w, const MessageHeader& h) noexcept
+    uint32_t payloadSize = 0;
+
+    uint32_t flags = 0;            // reserved in v1
+
+    uint8_t  headerChecksum = 0;   // XOR of header bytes with this treated as 0
+    uint8_t  payloadChecksum = 0;  // XOR of payload bytes
+    uint16_t reserved = 0;         // must be 0 in v1
+};
+static_assert(sizeof(MessageHeaderV1) == 20, "MessageHeaderV1 must be fixed size");
+static_assert(std::is_standard_layout<MessageHeaderV1>::value,
+              "MessageHeaderV1 must be standard-layout for offsetof()");
+
+inline Endianness payloadEndianFromHeader(uint8_t payloadEndian) noexcept
 {
-    w.writeUInt16(h.serviceId)
-    .writeUInt16(h.messageType)
-        .writeUInt32(h.payloadSize);
+    return (payloadEndian == 0) ? Endianness::Little : Endianness::Big;
+}
+
+inline uint8_t computeHeaderChecksum(const MessageHeaderV1& h) noexcept
+{
+    uint8_t tmp[sizeof(MessageHeaderV1)];
+    std::memcpy(tmp, &h, sizeof(tmp));
+
+    tmp[offsetof(MessageHeaderV1, headerChecksum)] = 0;
+
+    return xorChecksum(tmp, sizeof(tmp));
+}
+
+inline void finalizeChecksums(MessageHeaderV1& h, ImmutableByteView payload) noexcept
+{
+    h.headerSize = static_cast<uint8_t>(sizeof(MessageHeaderV1));
+    h.payloadChecksum = xorChecksum(payload);
+    h.headerChecksum = computeHeaderChecksum(h);
+}
+
+inline BinaryWriteStream& writeHeaderV1(BinaryWriteStream& w, const MessageHeaderV1& h) noexcept
+{
+    w.writeUInt8(h.version)
+    .writeUInt8(h.headerSize)
+        .writeUInt8(h.payloadEndian)
+        .writeUInt8(h.headerFlags)
+        .writeUInt16(h.serviceId)
+        .writeUInt16(h.messageType)
+        .writeUInt32(h.payloadSize)
+        .writeUInt32(h.flags)
+        .writeUInt8(h.headerChecksum)
+        .writeUInt8(h.payloadChecksum)
+        .writeUInt16(h.reserved);
+
     return w;
 }
 
-inline BinaryReadStream& readHeader(BinaryReadStream& r, MessageHeader& h) noexcept
+inline BinaryReadStream& readHeaderV1(BinaryReadStream& r, MessageHeaderV1& h) noexcept
 {
-    r.readUInt16(h.serviceId)
-    .readUInt16(h.messageType)
-        .readUInt32(h.payloadSize);
+    r.readUInt8(h.version)
+    .readUInt8(h.headerSize)
+        .readUInt8(h.payloadEndian)
+        .readUInt8(h.headerFlags)
+        .readUInt16(h.serviceId)
+        .readUInt16(h.messageType)
+        .readUInt32(h.payloadSize)
+        .readUInt32(h.flags)
+        .readUInt8(h.headerChecksum)
+        .readUInt8(h.payloadChecksum)
+        .readUInt16(h.reserved);
+
     return r;
 }
 
-} // namespace bds
-
-//------------------------------------------------------------------------------
-// Minimal NMEA-ish parsing helper for demo purposes
-// (Hard-coded strings, no I/O. This is intentionally simple.)
-//------------------------------------------------------------------------------
-
-static std::vector<std::string_view> splitFields(std::string_view s)
+inline bool validateHeaderV1(const MessageHeaderV1& h) noexcept
 {
-    std::vector<std::string_view> out;
-
-    // Strip checksum portion if present
-    const std::size_t star = s.find('*');
-    if (star != std::string_view::npos)
+    if (h.version != 1)
     {
-        s = s.substr(0, star);
+        return false;
+    }
+    if (h.headerSize != sizeof(MessageHeaderV1))
+    {
+        return false;
+    }
+    if (h.headerFlags != 0 || h.flags != 0 || h.reserved != 0)
+    {
+        return false;
     }
 
-    // Trim leading '$' if present
-    if (!s.empty() && s.front() == '$')
-    {
-        s.remove_prefix(1);
-    }
-
-    std::size_t start = 0;
-    while (start <= s.size())
-    {
-        const std::size_t comma = s.find(',', start);
-        if (comma == std::string_view::npos)
-        {
-            out.emplace_back(s.substr(start));
-            break;
-        }
-        out.emplace_back(s.substr(start, comma - start));
-        start = comma + 1;
-    }
-
-    return out;
+    return computeHeaderChecksum(h) == h.headerChecksum;
 }
+
+inline bool validatePayloadChecksum(const MessageHeaderV1& h, ImmutableByteView payload) noexcept
+{
+    (void)h;
+    return xorChecksum(payload) == h.payloadChecksum;
+}
+
+} // namespace bds
 
 //------------------------------------------------------------------------------
 // Demo / tests
@@ -828,11 +779,11 @@ int main()
     using namespace bds;
 
     // -----------------------------
-    // 1) Round-trip binary test
+    // 1) Round-trip payload test
     // -----------------------------
 
-    uint8_t storage[256] = {};
-    MutableBuffer outBuf(storage, sizeof(storage));
+    std::byte storage[256] = {};
+    MutableByteView outBuf(storage, sizeof(storage));
 
     Sample s1;
     s1.ms = 123456u;
@@ -840,12 +791,11 @@ int main()
     s1.pressurePa = 101325.125;
     s1.ok = true;
 
-    const Endianness wire = Endianness::Little;
+    const Endianness payloadWire = Endianness::Little;
 
-    BinaryWriteStream w(outBuf, wire);
-
-    // Serialize sample + a short string (size <= 254 => narrow)
+    BinaryWriteStream w(outBuf, payloadWire);
     std::string_view name = "TMPP";
+
     w.writeUInt32(s1.ms)
         .writeFloat(s1.tempC)
         .writeDouble(s1.pressurePa)
@@ -853,10 +803,11 @@ int main()
         .writeString(name);
 
     assert(w.ok());
+
     const std::size_t used = w.bytesWritten();
 
-    ImmutableBuffer inBuf(storage, used);
-    BinaryReadStream r(inBuf, wire);
+    ImmutableByteView inBuf(storage, used);
+    BinaryReadStream r(inBuf, payloadWire);
 
     Sample s2;
     std::string_view name2;
@@ -875,138 +826,101 @@ int main()
     assert(name2 == name);
 
     // -----------------------------
-    // 2) Size encoding tests
-    // -----------------------------
-
-    // (a) narrow size (10)
-    {
-        uint8_t b[32] = {};
-        BinaryWriteStream w2(MutableBuffer(b, sizeof(b)), wire);
-
-        std::string ten(10, 'A');
-        w2.writeString(ten);
-        assert(w2.ok());
-        assert(b[0] == 10); // narrow size is a single byte
-
-        BinaryReadStream r2(ImmutableBuffer(b, w2.bytesWritten()), wire);
-        std::string_view sv;
-        r2.readStringView(sv);
-        assert(r2.ok());
-        assert(sv.size() == 10);
-    }
-
-    // (b) narrow max (254)
-    {
-        uint8_t b[300] = {};
-        BinaryWriteStream w2(MutableBuffer(b, sizeof(b)), wire);
-
-        std::string s(254, 'B');
-        w2.writeString(s);
-        assert(w2.ok());
-        assert(b[0] == 254);
-
-        BinaryReadStream r2(ImmutableBuffer(b, w2.bytesWritten()), wire);
-        std::string_view sv;
-        r2.readStringView(sv);
-        assert(r2.ok());
-        assert(sv.size() == 254);
-    }
-
-    // (c) wide min (255) => 4-byte size: 0xFF + 0x00 0x00 0xFF
-    {
-        uint8_t b[400] = {};
-        BinaryWriteStream w2(MutableBuffer(b, sizeof(b)), wire);
-
-        std::string s(255, 'C');
-        w2.writeString(s);
-        assert(w2.ok());
-        assert(b[0] == 0xFF);
-        assert(b[1] == 0x00);
-        assert(b[2] == 0x00);
-        assert(b[3] == 0xFF);
-
-        BinaryReadStream r2(ImmutableBuffer(b, w2.bytesWritten()), wire);
-        std::string_view sv;
-        r2.readStringView(sv);
-        assert(r2.ok());
-        assert(sv.size() == 255);
-    }
-
-    // -----------------------------
-    // 3) Fixed header + pass-through payload view demo
+    // 2) Framed message with checksums + pass-through payload view
     // -----------------------------
 
     {
-        uint8_t frame[256] = {};
+        std::byte frame[256] = {};
+        MutableByteView frameBuf(frame, sizeof(frame));
 
-        // Build a payload (opaque bytes, but produced by BinaryWriteStream)
-        uint8_t payloadBytes[64] = {};
-        BinaryWriteStream pw(MutableBuffer(payloadBytes, sizeof(payloadBytes)), wire);
+        // Build payload bytes in a separate buffer first
+        std::byte payloadStorage[64] = {};
+        MutableByteView payloadBuf(payloadStorage, sizeof(payloadStorage));
 
+        BinaryWriteStream pw(payloadBuf, payloadWire);
         pw.writeUInt16(42)
             .writeUInt32(777)
             .writeString("opaque");
+
         assert(pw.ok());
 
         const uint32_t payloadSize = static_cast<uint32_t>(pw.bytesWritten());
 
-        // Frame it: [fixed header][payload]
-        BinaryWriteStream fw(MutableBuffer(frame, sizeof(frame)), wire);
+        // Frame layout: [header][payload]
+        const std::size_t headerSize = sizeof(MessageHeaderV1);
 
-        MessageHeader h;
+        // Write a zero header (reserve space) + payload into frame
+        {
+            BinaryWriteStream fw(frameBuf, HeaderWireEndianness);
+
+            MessageHeaderV1 zeroHeader;
+            std::memset(&zeroHeader, 0, sizeof(zeroHeader));
+
+            // Header bytes are treated as raw bytes in this reserve step.
+            fw.writeBytes(ImmutableByteView(&zeroHeader, sizeof(zeroHeader)));
+            assert(fw.ok());
+
+            fw.writeBytes(ImmutableByteView(payloadStorage, payloadSize));
+            assert(fw.ok());
+        }
+
+        // Payload view inside the frame
+        ImmutableByteView framePayloadView(frame + headerSize, payloadSize);
+
+        // Fill header + checksums
+        MessageHeaderV1 h;
+        h.version = 1;
+        h.headerSize = static_cast<uint8_t>(sizeof(MessageHeaderV1));
+        h.payloadEndian = static_cast<uint8_t>(payloadWire == Endianness::Little ? 0 : 1);
+        h.headerFlags = 0;
         h.serviceId = 1;
         h.messageType = 9;
         h.payloadSize = payloadSize;
+        h.flags = 0;
+        h.reserved = 0;
 
-        writeHeader(fw, h);
-        fw.writeBytes(ImmutableBuffer(payloadBytes, payloadSize));
-        assert(fw.ok());
+        finalizeChecksums(h, framePayloadView);
 
-        // Now "router" side: parse header, slice payload, forward without decoding payload
-        BinaryReadStream fr(ImmutableBuffer(frame, fw.bytesWritten()), wire);
+        // Overwrite the header region
+        {
+            MutableByteView headerRegion = subview(frameBuf, 0, headerSize);
+            BinaryWriteStream hw(headerRegion, HeaderWireEndianness);
+            writeHeaderV1(hw, h);
+            assert(hw.ok());
+        }
 
-        MessageHeader hdr;
-        fr.readUInt16(hdr.serviceId)
-            .readUInt16(hdr.messageType)
-            .readUInt32(hdr.payloadSize);
+        // Router reads header, validates, slices payload view, validates checksum
+        ImmutableByteView frameView(frame, headerSize + payloadSize);
+        BinaryReadStream fr(frameView, HeaderWireEndianness);
 
+        MessageHeaderV1 rh;
+        readHeaderV1(fr, rh);
         assert(fr.ok());
-        assert(hdr.payloadSize == payloadSize);
+        assert(validateHeaderV1(rh));
 
-        ImmutableBuffer payloadView;
-        fr.readBytesView(hdr.payloadSize, payloadView);
+        ImmutableByteView routedPayload;
+        fr.readBytesView(rh.payloadSize, routedPayload);
         assert(fr.ok());
-        assert(payloadView.size() == payloadSize);
+        assert(validatePayloadChecksum(rh, routedPayload));
 
-        // Consumer later decodes payloadView with its own BinaryReadStream
-        BinaryReadStream cr(payloadView, wire);
+        // Consumer decodes payload using payload endianness declared in header
+        const Endianness consumerWire = payloadEndianFromHeader(rh.payloadEndian);
+        BinaryReadStream cr(routedPayload, consumerWire);
+
         uint16_t a = 0;
         uint32_t b = 0;
         std::string_view sv;
+
         cr.readUInt16(a).readUInt32(b).readStringView(sv);
         assert(cr.ok());
         assert(a == 42);
         assert(b == 777);
         assert(sv == "opaque");
-    }
 
-    // -----------------------------
-    // 4) Hard-coded NMEA examples (ASCII)
-    // -----------------------------
-
-    {
-        std::string_view nmea1 = "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47";
-        std::string_view nmea2 = "$GPRMC,235947,A,5540.123,N,01234.567,W,000.5,054.7,191194,020.3,E*68";
-
-        auto f1 = splitFields(nmea1);
-        auto f2 = splitFields(nmea2);
-
-        // Minimal sanity: talker+type field present and splits
-        assert(!f1.empty());
-        assert(!f2.empty());
-        // e.g. "GPGGA", "GPRMC"
-        assert(f1[0].size() >= 5);
-        assert(f2[0].size() >= 5);
+        // Corrupt one payload byte: checksum should fail
+        frame[headerSize + 1] ^= std::byte{0x01};
+        ImmutableByteView corruptedPayload(frame + headerSize, payloadSize);
+        assert(!validatePayloadChecksum(rh, corruptedPayload));
     }
 
     std::cout << "All BinaryDataStream demo tests passed.\n";
