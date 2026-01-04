@@ -51,7 +51,7 @@ public:
     std::byte& operator[](std::size_t i) const noexcept { return mData[i]; }
 
     /**
-     * @brief Implicit conversion to an immutable ByteView.
+     * @brief Implicit conversion to an ImmutableByteView.
      *
      * Allows MutableByteView to be passed to read-only APIs
      * without copying or allocation.
