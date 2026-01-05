@@ -10,6 +10,6 @@ Code will be updated and refined as new chapters are released.
 
 Note: This repository may contain work-in-progress code ahead of the current published chapters.
 
-Constructive feedback always welcome and appreciated!  I have provided templates for your convenience. Please email feedback to mark@autumnalsoftware.com.
+Constructive feedback always welcome and appreciated!  I have provided templates for your convenience, just create a new issue and select a template. Please email feedback to mark@autumnalsoftware.com.
 
 Thank you for your support!
