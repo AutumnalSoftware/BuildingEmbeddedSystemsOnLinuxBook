@@ -2,7 +2,7 @@
 
 About This Repository
 
-This repository contains companion code for Building Embedded Systems on Linux: A Modern C++ Approach.
+This repository contains companion code for Building Embedded Systems on Linux: A Modern C++ Approach at https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach.  You'll find a free sample chapter there.
 
 The code here is intended to support released chapters only. During writing, I may push intermediate or experimental code that does not yet correspond directly to published text. When that happens, the book should be considered the authoritative reference.
 
