@@ -9,3 +9,5 @@ The code here is intended to support released chapters only. During writing, I m
 Code will be updated and refined as new chapters are released.
 
 Note: This repository may contain work-in-progress code ahead of the current published chapters.
+
+Constructive feedback always welcome and appreciated!
