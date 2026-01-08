@@ -7,10 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(nmea
     src/NMEATokenizer.cpp
     src/NMEAExtractionStream.cpp
+    src/NMEAInsertionStream.cpp
 
     include/nmea/NMEAStatus.h
     include/nmea/NMEATokenizer.h
     include/nmea/NMEAExtractionStream.h
+    include/nmea/NMEAInsertionStream.h
 )
 
 target_include_directories(nmea PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

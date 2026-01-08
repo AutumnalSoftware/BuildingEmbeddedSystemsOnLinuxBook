@@ -22,6 +22,9 @@ namespace nmea
         MissingIdentifier,
         InvalidIdentifierLength,
 
+        // Insertion
+        AlreadyFinalized,
+
         // Field access
         FieldMissing,
         FieldEmpty,
