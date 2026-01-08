@@ -1,15 +1,28 @@
 # BuildingEmbeddedSystemsOnLinuxBook
 
-About This Repository
+## About This Repository
 
-This repository contains companion code for Building Embedded Systems on Linux: A Modern C++ Approach at https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach.  You'll find a free sample chapter there.
+This repository contains companion code for  
+**Building Embedded Systems on Linux: A Modern C++ Approach**  
+https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach
 
-The code here is intended to support released chapters only. During writing, I may push intermediate or experimental code that does not yet correspond directly to published text. When that happens, the book should be considered the authoritative reference.
+A free sample chapter is available at the link above.
+
+The code here is intended to support **released chapters** of the book. During writing, I may push intermediate or experimental code that does not yet correspond directly to published text. When that happens, the book should be considered the authoritative reference.
 
 Code will be updated and refined as new chapters are released.
 
-Note: This repository may contain work-in-progress code ahead of the current published chapters.
+> **Note:** This repository may contain work-in-progress code ahead of the current published chapters.
 
-Constructive feedback always welcome and appreciated!  I have provided templates for your convenience, just create a new issue and select a template. Please email feedback to mark@autumnalsoftware.com.
+---
 
-Thank you for your support!
+## Feedback, Questions, and Discussion
+
+If you clone this repository and later find yourself wondering *why something is designed a certain way*, or if a section of the code or book felt unclear, **that feedback is valuable** — even if it’s months later and even if it’s not fully formed yet.
+
+The easiest way to ask questions or leave feedback is to open a GitHub issue (templates are provided).  
+If you’d prefer not to use GitHub, you can also email me directly at **mark@autumnalsoftware.com**.
+
+Both technical and conceptual feedback are welcome.
+
+Thank you for reading — and for taking the time to dig into the code.
