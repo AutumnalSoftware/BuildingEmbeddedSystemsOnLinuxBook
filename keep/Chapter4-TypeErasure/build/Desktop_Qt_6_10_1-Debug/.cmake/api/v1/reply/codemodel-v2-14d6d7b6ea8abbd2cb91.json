@@ -1,0 +1,60 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "TypeErasureDemo",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "TypeErasureDemo::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-TypeErasureDemo-Debug-58f0d1835d1acffacc72.json",
+					"name" : "TypeErasureDemo",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/Desktop_Qt_6_10_1-Debug",
+		"source" : "/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
