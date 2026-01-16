@@ -17,6 +17,7 @@ add_executable(anymeasurement_demo
     demo/AnyMeasurementDemo.cpp
     include/AnyMeasurement.h
     include/MeasurementTypes.h
+    include/MeasurementTypesIO.h
 )
 target_link_libraries(anymeasurement_demo PRIVATE AnyMeasurement)
 
