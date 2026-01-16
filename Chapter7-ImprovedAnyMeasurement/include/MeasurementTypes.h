@@ -1,11 +1,9 @@
 #pragma once
 #include <cstdint>
 
-namespace weather
-{
+namespace weather {
 
-enum class MeasurementKind : std::uint16_t
-{
+enum class MeasurementKind : std::uint16_t {
     Temperature,
     BarometricPressure,
     Humidity,
@@ -15,13 +13,11 @@ enum class MeasurementKind : std::uint16_t
     Position
 };
 
-enum class SourceId : std::uint16_t
-{
+enum class SourceId : std::uint16_t {
     Unknown
 };
 
-struct MeasurementHeaderV1
-{
+struct MeasurementHeaderV1 {
     std::uint64_t rxTime = 0;
     std::uint64_t eventTime = 0;
     MeasurementKind kind = MeasurementKind::Temperature;
@@ -29,13 +25,13 @@ struct MeasurementHeaderV1
     std::uint32_t flags = 0;
 };
 
-struct Temperature         { double value = 0.0; };
-struct BarometricPressure  { double value = 0.0; };
-struct Humidity            { double value = 0.0; };
-struct WindSpeed           { double value = 0.0; };
-struct WindDirection       { double value = 0.0; };
-struct Precipitation       { double value = 0.0; };
-struct Position            { double lat = 0.0; double lon = 0.0; double alt = 0.0; };
+struct Temperature        { double value = 0.0; };
+struct BarometricPressure { double value = 0.0; };
+struct Humidity           { double value = 0.0; };
+struct WindSpeed          { double value = 0.0; };
+struct WindDirection      { double value = 0.0; };
+struct Precipitation      { double value = 0.0; };
+struct Position           { double lat = 0.0; double lon = 0.0; double alt = 0.0; };
 
 template <typename T> struct MeasurementKindOf;
 
@@ -46,11 +42,5 @@ template <> struct MeasurementKindOf<WindSpeed>          { static constexpr Meas
 template <> struct MeasurementKindOf<WindDirection>      { static constexpr MeasurementKind value = MeasurementKind::WindDirection; };
 template <> struct MeasurementKindOf<Precipitation>      { static constexpr MeasurementKind value = MeasurementKind::Precipitation; };
 template <> struct MeasurementKindOf<Position>           { static constexpr MeasurementKind value = MeasurementKind::Position; };
-
-// Dummy stream types for Chapter 7 context
-struct BdsWriter {};
-struct BdsReader {};
-struct NmeaWriter {};
-struct NmeaReader {};
 
 } // namespace weather
