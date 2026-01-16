@@ -7,6 +7,7 @@
 
 #include "nmea/NMEATokenizer.h"
 #include "nmea/NMEAExtractionStream.h"
+#include "nmea/NMEAInsertionStream.h"
 
 struct ExamplePosSentence
 {
@@ -43,10 +44,19 @@ static bool parseExamplePos(std::string_view sentence, ExamplePosSentence& out)
 
 int main()
 {
-    const std::string_view s = "$GPXYZ,123519,4807.038,N,01131.000,E*54\r\n";
+    nmea::InsertionStream ins("GPXYZ");
+
+    ins.writeOptionalString(std::optional<std::string_view>("123519"));
+    ins.writeDouble(4807.038);
+    ins.writeChar('N');
+    ins.writeDouble(1131.000);
+    ins.writeChar('E');
+    ins.finalize(true);
+
+    std::cout << ins.sentence();
 
     ExamplePosSentence pos{};
-    if (!parseExamplePos(s, pos))
+    if (!parseExamplePos(ins.sentence(), pos))
     {
         std::cout << "Parse failed\n";
         return 1;

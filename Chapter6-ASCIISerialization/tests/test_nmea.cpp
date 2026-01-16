@@ -8,6 +8,7 @@
 
 #include "nmea/NMEATokenizer.h"
 #include "nmea/NMEAExtractionStream.h"
+#include "nmea/NMEAInsertionStream.h"
 
 static int g_failures = 0;
 
@@ -102,6 +103,53 @@ static void test_required_vs_optional()
     CHECK(oc.has_value() && *oc == 3);
 }
 
+
+static void test_inserter_round_trip()
+{
+    nmea::InsertionStream ins("GPXYZ");
+    std::optional<std::string_view> a = std::string_view("1");
+    std::optional<int> b = 2;
+    std::optional<int> empty;
+    std::optional<double> d = 3.5;
+
+    CHECK_OK(ins.writeOptionalString(a));
+    CHECK_OK(ins.writeOptionalInt(b));
+    CHECK_OK(ins.writeOptionalInt(empty));
+    CHECK_OK(ins.writeOptionalDouble(d));
+    CHECK_OK(ins.finalize(false));
+
+    nmea::Tokenizer tok(ins.sentence());
+    CHECK(tok.status().ok());
+    CHECK(tok.checksumValid());
+    CHECK(tok.valid());
+    CHECK(tok.identifier() == "GPXYZ");
+    CHECK(tok.fieldCount() == 4);
+
+    auto f = collectFields(tok);
+    CHECK(f.size() == 4);
+    CHECK(f[0] == "1");
+    CHECK(f[1] == "2");
+    CHECK(f[2].empty());
+    CHECK(f[3] == "3.5");
+}
+
+static void test_inserter_trailing_empty_field()
+{
+    nmea::InsertionStream ins("GPXYZ");
+    CHECK_OK(ins.writeInt(1));
+    CHECK_OK(ins.writeEmpty());
+    CHECK_OK(ins.finalize(false));
+
+    nmea::Tokenizer tok(ins.sentence());
+    CHECK(tok.valid());
+    CHECK(tok.fieldCount() == 2);
+
+    auto f = collectFields(tok);
+    CHECK(f.size() == 2);
+    CHECK(f[0] == "1");
+    CHECK(f[1].empty());
+}
+
 static void test_missing_field_is_error_even_for_optional()
 {
     const std::string_view s = "$GPXYZ,1,2*4F\n";
@@ -128,6 +176,8 @@ int main()
     test_trailing_comma_produces_empty_final_field();
     test_required_vs_optional();
     test_missing_field_is_error_even_for_optional();
+    test_inserter_round_trip();
+    test_inserter_trailing_empty_field();
 
     if (g_failures == 0)
     {
