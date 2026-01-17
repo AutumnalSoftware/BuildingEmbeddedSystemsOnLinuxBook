@@ -70,8 +70,7 @@ void SensorPipeline::producerLoop()
 
     while (m_running.load())
     {
-        // Your Chapter 7 concrete GPS measurement type is Position.
-        const weather::Position pos = producer.nextPosition(); // keep your current name if that's what you wrote
+        const weather::Position pos = producer.nextPosition();
 
         weather::MeasurementHeaderV1 header{};
         header.rxTime = nowNs();
