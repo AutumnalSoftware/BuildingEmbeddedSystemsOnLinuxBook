@@ -8,8 +8,10 @@
 
 #include "AnyMeasurement.h"
 
-// A deliberately simple, fixed-topology pipeline:
+//
+// A simple, fixed-topology pipeline:
 // Producer thread -> SPSC queue -> Consumer thread
+//
 class SensorPipeline
 {
 public:
@@ -28,11 +30,8 @@ private:
     void consumerLoop();
 
 private:
-    std::atomic<bool> m_running { false };
-
-    // Note: ReaderWriterQueue is SPSC. Capacity is a hint / initial sizing.
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement> m_queue;
-
     std::thread m_producerThread;
     std::thread m_consumerThread;
+    std::atomic<bool> m_running { false };
 };
