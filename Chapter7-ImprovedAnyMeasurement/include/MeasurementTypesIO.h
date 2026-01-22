@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
-
 #pragma once
 
 #include <ostream>
@@ -14,14 +13,15 @@ inline std::ostream& operator<<(std::ostream& os, MeasurementKind k)
 {
     switch (k)
     {
-    case MeasurementKind::Temperature:        os << "Temperature"; break;
-    case MeasurementKind::BarometricPressure: os << "BarometricPressure"; break;
-    case MeasurementKind::Humidity:           os << "Humidity"; break;
-    case MeasurementKind::WindSpeed:          os << "WindSpeed"; break;
-    case MeasurementKind::WindDirection:      os << "WindDirection"; break;
-    case MeasurementKind::Precipitation:      os << "Precipitation"; break;
-    case MeasurementKind::Position:           os << "Position"; break;
-    default:                                  os << "MeasurementKind(unknown)"; break;
+    case MeasurementKind::Empty:               os << "Empty"; break;
+    case MeasurementKind::Temperature:         os << "Temperature"; break;
+    case MeasurementKind::BarometricPressure:  os << "BarometricPressure"; break;
+    case MeasurementKind::Humidity:            os << "Humidity"; break;
+    case MeasurementKind::WindSpeed:           os << "WindSpeed"; break;
+    case MeasurementKind::WindDirection:       os << "WindDirection"; break;
+    case MeasurementKind::Precipitation:       os << "Precipitation"; break;
+    case MeasurementKind::Position:            os << "Position"; break;
+    default:                                   os << "MeasurementKind(unknown)"; break;
     }
     return os;
 }
@@ -45,6 +45,12 @@ inline std::ostream& operator<<(std::ostream& os, const MeasurementHeaderV1& h)
        << ", source=" << h.source
        << ", flags=" << h.flags
        << "}";
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const Empty&)
+{
+    os << "Empty{}";
     return os;
 }
 

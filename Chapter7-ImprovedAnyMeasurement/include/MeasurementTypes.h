@@ -4,6 +4,7 @@
 namespace weather {
 
 enum class MeasurementKind : std::uint16_t {
+    Empty = 0,
     Temperature,
     BarometricPressure,
     Humidity,
@@ -20,11 +21,15 @@ enum class SourceId : std::uint16_t {
 struct MeasurementHeaderV1 {
     std::uint64_t rxTime = 0;
     std::uint64_t eventTime = 0;
-    MeasurementKind kind = MeasurementKind::Temperature;
+    MeasurementKind kind = MeasurementKind::Empty;
     SourceId source = SourceId::Unknown;
     std::uint32_t flags = 0;
 };
 
+// Empty payload used for scratch / sentinel measurements
+struct Empty {};
+
+// Concrete measurement payloads
 struct Temperature        { double value = 0.0; };
 struct BarometricPressure { double value = 0.0; };
 struct Humidity           { double value = 0.0; };
@@ -35,6 +40,7 @@ struct Position           { double lat = 0.0; double lon = 0.0; double alt = 0.0
 
 template <typename T> struct MeasurementKindOf;
 
+template <> struct MeasurementKindOf<Empty>              { static constexpr MeasurementKind value = MeasurementKind::Empty; };
 template <> struct MeasurementKindOf<Temperature>        { static constexpr MeasurementKind value = MeasurementKind::Temperature; };
 template <> struct MeasurementKindOf<BarometricPressure> { static constexpr MeasurementKind value = MeasurementKind::BarometricPressure; };
 template <> struct MeasurementKindOf<Humidity>           { static constexpr MeasurementKind value = MeasurementKind::Humidity; };

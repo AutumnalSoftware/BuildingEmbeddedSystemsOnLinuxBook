@@ -16,6 +16,17 @@ public:
 
     AnyMeasurement() = delete;
 
+    static AnyMeasurement empty() noexcept
+    {
+        AnyMeasurement m(EmptyTag{});
+        return m;
+    }
+
+    bool isEmpty() const noexcept
+    {
+        return header_.kind == MeasurementKind::Empty;
+    }
+
     template <typename T>
     AnyMeasurement(MeasurementHeaderV1 header, T measurement)
         : header_(header)
@@ -57,10 +68,12 @@ public:
     AnyMeasurement(AnyMeasurement&& other) noexcept
         : header_(other.header_), ops_(other.ops_)
     {
-        if (ops_) {
-            ops_->move_construct(storage_.bytes, other.storage_.bytes);
-            other.ops_ = nullptr;
-        }
+        assert(ops_);
+        ops_->move_construct(storage_.bytes, other.storage_.bytes);
+        other.ops_ = &EmptyOps();
+        other.header_ = {};
+        other.header_.kind = MeasurementKind::Empty;
+        other.header_.source = SourceId::Unknown;
     }
 
     AnyMeasurement& operator=(AnyMeasurement&& other) noexcept
@@ -69,10 +82,14 @@ public:
         destroy_if_needed();
         header_ = other.header_;
         ops_ = other.ops_;
-        if (ops_) {
-            ops_->move_construct(storage_.bytes, other.storage_.bytes);
-            other.ops_ = nullptr;
-        }
+        assert(ops_);
+        ops_->move_construct(storage_.bytes, other.storage_.bytes);
+
+        other.ops_ = &EmptyOps();
+        other.header_ = {};
+        other.header_.kind = MeasurementKind::Empty;
+        other.header_.source = SourceId::Unknown;
+
         return *this;
     }
 
@@ -85,7 +102,7 @@ public:
     {
         using U = std::decay_t<T>;
         (void)MeasurementKindOf<U>::value;
-        if (!ops_ || ops_ != &OpsFor<U>()) return nullptr;
+        if (ops_ != &OpsFor<U>()) return nullptr;
         return reinterpret_cast<const U*>(storage_.bytes);
     }
 
@@ -109,6 +126,32 @@ private:
         MeasurementKind kind;
         std::uint16_t measurement_size;
     };
+
+    struct EmptyTag {};
+
+    explicit AnyMeasurement(EmptyTag) noexcept
+    {
+        header_ = {};
+        header_.kind = MeasurementKind::Empty;
+        header_.source = SourceId::Unknown;
+        ops_ = &EmptyOps();
+    }
+
+    static void empty_destroy(void*) noexcept {}
+    static void empty_copy_construct(void*, const void*) noexcept {}
+    static void empty_move_construct(void*, void*) noexcept {}
+
+    static const Ops& EmptyOps() noexcept
+    {
+        static const Ops ops{
+            &empty_destroy,
+            &empty_copy_construct,
+            &empty_move_construct,
+            MeasurementKind::Empty,
+            0
+        };
+        return ops;
+    }
 
     template <typename T>
     static void destroy_fn(void* p) noexcept { reinterpret_cast<T*>(p)->~T(); }
