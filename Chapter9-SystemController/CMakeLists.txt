@@ -1,41 +1,18 @@
 cmake_minimum_required(VERSION 3.16)
+project(chapter9_system_demo LANGUAGES CXX)
 
-project(Chapter9SystemDemo
-    VERSION 0.1.0
-    LANGUAGES CXX
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(chapter9_demo
+    src/main.cpp
+    src/WeatherSystem.cpp
+    src/WeatherSystemBuilder.cpp
+    src/Chapter9RunLoops.cpp
 )
 
-add_executable(Chapter9SystemDemo
-    main.cpp
-
-    BuildStatus.h
-
-    Measurements.h
-
-    AnyMeasurement.h
-    AnyMeasurement.cpp
-
-    LogEvent.h
-
-    Chapter9RunLoops.h
-    Chapter9RunLoops.cpp
-
-    WeatherSystem.h
-    WeatherSystem.cpp
-
-    WeatherSystemBuilder.h
-    WeatherSystemBuilder.cpp
+target_include_directories(chapter9_demo PRIVATE
+    include
+    ../Chapter7-ImprovedAnyMeasurement/include
+    ../ThirdParty/readerwriterqueue
 )
-
-target_compile_features(Chapter9SystemDemo PRIVATE cxx_std_17)
-
-target_include_directories(Chapter9SystemDemo PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/readerwriterqueue
-)
-
-if (MSVC)
-    target_compile_options(Chapter9SystemDemo PRIVATE /W4)
-else()
-    target_compile_options(Chapter9SystemDemo PRIVATE -Wall -Wextra -Wpedantic)
-endif()

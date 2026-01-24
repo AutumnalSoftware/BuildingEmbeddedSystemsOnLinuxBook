@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
+
+#pragma once
+
+#include <array>
+#include <atomic>
+#include <functional>
+#include <thread>
+
+#include "AnyMeasurement.h"
+#include "LogEvent.h"
+#include "readerwriterqueue.h"
+
+class Chapter9RunLoops;
+
+class WeatherSystem
+{
+public:
+    static constexpr std::size_t ThreadCount = 3;
+
+    WeatherSystem();
+    ~WeatherSystem();
+
+    WeatherSystem(const WeatherSystem&) = delete;
+    WeatherSystem& operator=(const WeatherSystem&) = delete;
+
+    void setThreadEntry(std::size_t index,
+                        std::function<void(const std::atomic<bool>&)> entry);
+
+    void start();
+    void stop() noexcept;
+    void join();
+
+    moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& inQueue() noexcept;
+    moodycamel::ReaderWriterQueue<LogEvent>& logQueue() noexcept;
+
+    Chapter9RunLoops& runLoops() noexcept;
+
+private:
+    moodycamel::ReaderWriterQueue<weather::AnyMeasurement> m_inQ;
+    moodycamel::ReaderWriterQueue<LogEvent> m_logQ;
+
+    Chapter9RunLoops* m_runLoops;
+
+    std::array<std::function<void(const std::atomic<bool>&)>, ThreadCount> m_entries {};
+    std::array<std::thread, ThreadCount> m_threads {};
+
+    std::atomic<bool> m_stopRequested { false };
+};

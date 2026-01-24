@@ -1,13 +1,28 @@
-# Chapter 9 System Composition Demo (3 threads)
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
 
-This is a standalone mini-project that demonstrates the Chapter 9 architecture:
+# Chapter 9 - System Controller (Snapshot)
 
+This Chapter 9 demo is about system composition and control.
+
+- Uses `std::thread`
 - No Boost.Asio
 - No real I/O
-- One producer thread generates multiple measurement types at different rates
-- A consumer/dispatcher thread gathers mechanical instrumentation
-- A logger thread prints periodic summaries
-- Data crosses thread boundaries by value through explicit bounded queues
+- Test threads generate measurements
+- Concurrency boundaries are explicit bounded queues (MoodyCamel SPSC)
+
+## Dependencies
+
+This snapshot assumes the repository already provides:
+
+- `ThirdParty/readerwriterqueue`
+- `ThirdParty/boost_asio_1_36_0` (not used in Chapter 9, but present for later chapters)
+- `../Chapter7-ImprovedAnyMeasurement/include` containing:
+  - `MeasurementTypes.h`
+  - `AnyMeasurement.h`
+  - `MeasurementTypesIO.h`
+
+No third-party sources are duplicated in this snapshot.
 
 ## Build
 
@@ -15,16 +30,7 @@ This is a standalone mini-project that demonstrates the Chapter 9 architecture:
 mkdir -p build
 cd build
 cmake ..
-cmake --build .
-./Chapter9SystemDemo
+cmake --build . -j
+./Chapter9_SystemController
 ```
 
-## ThirdParty: readerwriterqueue
-
-The book uses moodycamel::ReaderWriterQueue (SPSC) under `ThirdParty/readerwriterqueue`.
-
-This ZIP includes a small stand-in header at:
-
-- `ThirdParty/readerwriterqueue/readerwriterqueue.h`
-
-If you already vendored the real library, replace that header with the upstream version.

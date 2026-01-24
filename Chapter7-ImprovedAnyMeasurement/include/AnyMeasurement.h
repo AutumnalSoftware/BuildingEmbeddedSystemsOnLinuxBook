@@ -100,6 +100,9 @@ public:
     ~AnyMeasurement() { destroy_if_needed(); }
 
     MeasurementKind kind() const noexcept { return header_.kind; }
+    const MeasurementHeaderV1& header() const noexcept { return header_; }
+    MeasurementHeaderV1& header() noexcept { return header_; }
+
 
     template <typename T>
     const T* try_get() const noexcept
