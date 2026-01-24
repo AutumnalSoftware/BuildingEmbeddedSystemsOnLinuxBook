@@ -9,6 +9,10 @@ add_executable(chapter9_demo
     src/WeatherSystem.cpp
     src/WeatherSystemBuilder.cpp
     src/Chapter9RunLoops.cpp
+    include/WeatherSystem.h
+    include/WeatherSystemBuilder.h
+    include/Chapter9MeasurementFactory.h
+    include/Chapter9RunLoops.h
 )
 
 target_include_directories(chapter9_demo PRIVATE
