@@ -18,6 +18,8 @@ add_executable(anymeasurement_demo
     include/AnyMeasurement.h
     include/MeasurementTypes.h
     include/MeasurementTypesIO.h
+    include/MeasurementNameOf.h
+    include/MeasurementKindStrings.h
 )
 target_link_libraries(anymeasurement_demo PRIVATE AnyMeasurement)
 

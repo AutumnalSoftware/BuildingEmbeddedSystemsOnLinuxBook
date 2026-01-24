@@ -3,27 +3,17 @@
 
 #pragma once
 
-#include <ostream>
-
 #include "MeasurementTypes.h"
+
+#include <ostream>
+#include <string_view>
 
 namespace weather
 {
 
 inline std::ostream& operator<<(std::ostream& os, MeasurementKind k)
 {
-    switch (k)
-    {
-    case MeasurementKind::Empty:               os << "Empty"; break;
-    case MeasurementKind::Temperature:         os << "Temperature"; break;
-    case MeasurementKind::BarometricPressure:  os << "BarometricPressure"; break;
-    case MeasurementKind::Humidity:            os << "Humidity"; break;
-    case MeasurementKind::WindSpeed:           os << "WindSpeed"; break;
-    case MeasurementKind::WindDirection:       os << "WindDirection"; break;
-    case MeasurementKind::Precipitation:       os << "Precipitation"; break;
-    case MeasurementKind::Position:            os << "Position"; break;
-    default:                                   os << "MeasurementKind(unknown)"; break;
-    }
+    os << to_string(k);
     return os;
 }
 
@@ -98,6 +88,37 @@ inline std::ostream& operator<<(std::ostream& os, const Position& p)
        << ", alt=" << p.alt
        << "}";
     return os;
+}
+
+// Closed-world mapping. If you add a kind, you add it here.
+inline std::string_view to_string(MeasurementKind k) noexcept
+{
+    switch (k)
+    {
+    case MeasurementKind::Empty:              return "Empty";
+    case MeasurementKind::Temperature:        return "Temperature";
+    case MeasurementKind::BarometricPressure: return "BarometricPressure";
+    case MeasurementKind::Humidity:           return "Humidity";
+    case MeasurementKind::WindSpeed:          return "WindSpeed";
+    case MeasurementKind::WindDirection:      return "WindDirection";
+    case MeasurementKind::Precipitation:      return "Precipitation";
+    case MeasurementKind::Position:           return "Position";
+    default:                                  return "MeasurementKind(unknown)";
+    }
+}
+
+inline bool from_string(std::string_view s, MeasurementKind& out) noexcept
+{
+    if (s == "Empty")              { out = MeasurementKind::Empty; return true; }
+    if (s == "Temperature")        { out = MeasurementKind::Temperature; return true; }
+    if (s == "BarometricPressure") { out = MeasurementKind::BarometricPressure; return true; }
+    if (s == "Humidity")           { out = MeasurementKind::Humidity; return true; }
+    if (s == "WindSpeed")          { out = MeasurementKind::WindSpeed; return true; }
+    if (s == "WindDirection")      { out = MeasurementKind::WindDirection; return true; }
+    if (s == "Precipitation")      { out = MeasurementKind::Precipitation; return true; }
+    if (s == "Position")           { out = MeasurementKind::Position; return true; }
+
+    return false;
 }
 
 } // namespace weather
