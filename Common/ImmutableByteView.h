@@ -76,7 +76,7 @@ inline ImmutableByteView asBytes(const void* data, std::size_t size) noexcept
 template<typename T, std::size_t N>
 inline ImmutableByteView asBytes(const std::array<T, N>& a) noexcept
 {
-    static_assert(std::is_trivial<T>::value,
+    static_assert(std::is_trivially_copyable<T>::value,
                   "asBytes(std::array<...>) requires a trivial element type");
     return ImmutableByteView(a.data(), N * sizeof(T));
 }
