@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/typeErasureTests.dir/tests.cpp.o CMakeFiles/typeErasureTests.dir/NMEACommon.cpp.o CMakeFiles/typeErasureTests.dir/NMEAExtractionStream.cpp.o CMakeFiles/typeErasureTests.dir/NMEAInsertionStream.cpp.o -o typeErasureTests 
