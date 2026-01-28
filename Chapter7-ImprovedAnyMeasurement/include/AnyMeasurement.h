@@ -189,9 +189,13 @@ private:
 
     void destroy_if_needed() noexcept
     {
-        if (ops_) {
+        if (ops_)
+        {
             ops_->destroy(storage_.bytes);
-            ops_ = nullptr;
+            ops_ = &EmptyOps();
+            header_ = {};
+            header_.kind = MeasurementKind::Empty;
+            header_.source = SourceId::Unknown;
         }
     }
 
