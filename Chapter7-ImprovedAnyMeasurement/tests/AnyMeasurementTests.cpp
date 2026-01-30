@@ -4,6 +4,14 @@
 #include <cassert>
 #include <iostream>
 
+#include "MutableByteView.h"
+
+#include "BinaryWriteStream.h"
+
+#include "NMEAStatus.h"
+#include "NMEAInsertionStream.h"
+
+
 #include "AnyMeasurement.h"
 
 int main()
@@ -37,5 +45,24 @@ int main()
         std::cout << "Empty test passed\n";
     }
 
+    // Serialization smoke test (default traits: OK / no-op)
+    {
+        MeasurementHeaderV1 h{};
+        AnyMeasurement a(h, WindSpeed{5.0});
+
+        // NMEA stream: identifier is talker(2) + type(3)
+        InsertionStream ns("WMWND");
+        Status st = a.nmea_serialize(ns);
+        assert(st.ok());
+        std::cout << "NMEA serialization smoke test passed\n";
+
+        std::byte buf[256]{};
+        MutableByteView mv(buf, sizeof(buf));
+        BinaryWriteStream bs(mv);
+        a.bds_serialize(bs);
+        assert(bs.ok());
+
+        std::cout << "Binary serialization smoke test passed\n";
+    }
     return 0;
 }

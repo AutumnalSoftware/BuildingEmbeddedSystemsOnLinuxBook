@@ -5,14 +5,31 @@
 
 #include "MeasurementTypes.h"
 
+#include "NMEAStatus.h"
+
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <new>
 #include <type_traits>
 #include <utility>
 
 namespace weather {
+
+class InsertionStream;
+class BinaryWriteStream;
+
+template <typename T>
+struct MeasurementSerializationTraits
+{
+    static Status nmea(InsertionStream&, const T&) noexcept
+    {
+        return Status::Ok();
+    }
+
+    static void bds(BinaryWriteStream&, const T&) noexcept
+    {
+    }
+};
 
 class AnyMeasurement {
 public:
@@ -104,6 +121,19 @@ public:
     MeasurementHeaderV1& header() noexcept { return header_; }
 
 
+    // Serialization dispatch
+    Status nmea_serialize(InsertionStream& ns) const noexcept
+    {
+        assert(ops_);
+        return ops_->nmea_write(ns, storage_.bytes);
+    }
+
+    void bds_serialize(BinaryWriteStream& bs) const noexcept
+    {
+        assert(ops_);
+        ops_->bds_write(bs, storage_.bytes);
+    }
+
     template <typename T>
     const T* try_get() const noexcept
     {
@@ -130,6 +160,10 @@ private:
         void (*destroy)(void*) noexcept;
         void (*copy_construct)(void*, const void*) noexcept;
         void (*move_construct)(void*, void*) noexcept;
+
+        Status (*nmea_write)(InsertionStream&, const void*) noexcept;
+        void (*bds_write)(BinaryWriteStream&, const void*) noexcept;
+
         MeasurementKind kind;
         std::uint16_t measurement_size;
     };
@@ -147,6 +181,15 @@ private:
     static void empty_destroy(void*) noexcept {}
     static void empty_copy_construct(void*, const void*) noexcept {}
     static void empty_move_construct(void*, void*) noexcept {}
+    static Status empty_nmea_write(InsertionStream&, const void*) noexcept
+    {
+        return Status::Ok();
+    }
+
+    static void empty_bds_write(BinaryWriteStream&, const void*) noexcept
+    {
+    }
+
 
     static const Ops& EmptyOps() noexcept
     {
@@ -154,6 +197,8 @@ private:
             &empty_destroy,
             &empty_copy_construct,
             &empty_move_construct,
+            &empty_nmea_write,
+            &empty_bds_write,
             MeasurementKind::Empty,
             0
         };
@@ -175,12 +220,27 @@ private:
     }
 
     template <typename T>
+    static Status nmea_write_fn(InsertionStream& ns, const void* p) noexcept
+    {
+        return MeasurementSerializationTraits<T>::nmea(ns, *reinterpret_cast<const T*>(p));
+    }
+
+    template <typename T>
+    static void bds_write_fn(BinaryWriteStream& bs, const void* p) noexcept
+    {
+        MeasurementSerializationTraits<T>::bds(bs, *reinterpret_cast<const T*>(p));
+    }
+
+
+    template <typename T>
     static const Ops& OpsFor() noexcept
     {
         static const Ops ops{
             &destroy_fn<T>,
             &copy_construct_fn<T>,
             &move_construct_fn<T>,
+            &nmea_write_fn<T>,
+            &bds_write_fn<T>,
             MeasurementKindOf<T>::value,
             static_cast<std::uint16_t>(sizeof(T))
         };

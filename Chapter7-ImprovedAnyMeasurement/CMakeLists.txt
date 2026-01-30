@@ -13,6 +13,11 @@ target_sources(AnyMeasurement INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include/MeasurementTypes.h
 )
 
+target_include_directories(AnyMeasurement INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include/nmea
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+)
+
 add_executable(anymeasurement_demo
     demo/AnyMeasurementDemo.cpp
     include/AnyMeasurement.h
@@ -28,7 +33,28 @@ add_executable(anymeasurement_tests
     include/AnyMeasurement.h
     include/MeasurementTypes.h
 )
+
+target_include_directories(anymeasurement_tests PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter5-BinarySerialization
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include/nmea
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+)
+
 target_link_libraries(anymeasurement_tests PRIVATE AnyMeasurement)
+
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter5-BinarySerialization
+    ${CMAKE_CURRENT_BINARY_DIR}/_deps/ch5_binary
+)
+
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization
+    ${CMAKE_CURRENT_BINARY_DIR}/_deps/ch6_ascii
+)
+target_link_libraries(anymeasurement_tests PRIVATE nmea)
+target_link_libraries(anymeasurement_demo  PRIVATE nmea)   # if your demo constructs InsertionStream too
+
 
 include(CTest)
 add_test(NAME anymeasurement_tests COMMAND anymeasurement_tests)

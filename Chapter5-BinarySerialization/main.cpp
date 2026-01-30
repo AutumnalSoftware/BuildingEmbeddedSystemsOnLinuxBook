@@ -72,7 +72,7 @@ int main()
 
     const Endianness payloadWire = Endianness::Little;
 
-    BinaryWriteStream w(outBuf, payloadWire);
+    weather::BinaryWriteStream w(outBuf, payloadWire);
     std::string_view name = "TMPP";
 
     w.writeUInt32(s1.ms)
@@ -86,7 +86,7 @@ int main()
     const std::size_t used = w.bytesWritten();
 
     ImmutableByteView inBuf(storage, used);
-    BinaryReadStream r(inBuf, payloadWire);
+    weather::BinaryReadStream r(inBuf, payloadWire);
 
     Sample s2;
     std::string_view name2;
@@ -116,7 +116,7 @@ int main()
         std::byte payloadStorage[64] = {};
         MutableByteView payloadBuf(payloadStorage, sizeof(payloadStorage));
 
-        BinaryWriteStream pw(payloadBuf, payloadWire);
+        weather::BinaryWriteStream pw(payloadBuf, payloadWire);
         pw.writeUInt16(42)
             .writeUInt32(777)
             .writeString("opaque");
@@ -130,7 +130,7 @@ int main()
 
         // Write a zero header (reserve space) + payload into frame
         {
-            BinaryWriteStream fw(frameBuf, HeaderWireEndianness);
+            weather::BinaryWriteStream fw(frameBuf, HeaderWireEndianness);
 
             MessageHeaderV1 zeroHeader;
             std::memset(&zeroHeader, 0, sizeof(zeroHeader));
@@ -163,14 +163,14 @@ int main()
         // Overwrite the header region
         {
             MutableByteView headerRegion = subview(frameBuf, 0, headerSize);
-            BinaryWriteStream hw(headerRegion, HeaderWireEndianness);
+            weather::BinaryWriteStream hw(headerRegion, HeaderWireEndianness);
             writeHeaderV1(hw, h);
             assert(hw.ok());
         }
 
         // Router reads header, validates, slices payload view, validates checksum
         ImmutableByteView frameView(frame, headerSize + payloadSize);
-        BinaryReadStream fr(frameView, HeaderWireEndianness);
+        weather::BinaryReadStream fr(frameView, HeaderWireEndianness);
 
         MessageHeaderV1 rh;
         readHeaderV1(fr, rh);
@@ -184,7 +184,7 @@ int main()
 
         // Consumer decodes payload using payload endianness declared in header
         const Endianness consumerWire = payloadEndianFromHeader(rh.payloadEndian);
-        BinaryReadStream cr(routedPayload, consumerWire);
+        weather::BinaryReadStream cr(routedPayload, consumerWire);
 
         uint16_t a = 0;
         uint32_t b = 0;

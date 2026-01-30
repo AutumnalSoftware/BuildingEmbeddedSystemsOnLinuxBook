@@ -67,7 +67,7 @@ inline void finalizeChecksums(MessageHeaderV1& h, ImmutableByteView payload) noe
     h.headerChecksum = computeHeaderChecksum(h);
 }
 
-inline BinaryWriteStream& writeHeaderV1(BinaryWriteStream& w, const MessageHeaderV1& h) noexcept
+inline weather::BinaryWriteStream& writeHeaderV1(weather::BinaryWriteStream& w, const MessageHeaderV1& h) noexcept
 {
     w.writeUInt32(h.magic)
         .writeUInt8(h.version)
@@ -85,7 +85,7 @@ inline BinaryWriteStream& writeHeaderV1(BinaryWriteStream& w, const MessageHeade
     return w;
 }
 
-inline BinaryReadStream& readHeaderV1(BinaryReadStream& r, MessageHeaderV1& h) noexcept
+inline weather::BinaryReadStream& readHeaderV1(weather::BinaryReadStream& r, MessageHeaderV1& h) noexcept
 {
     r.readUInt32(h.magic)
         .readUInt8(h.version)

@@ -22,6 +22,9 @@
 
 #include "BdsCommon.h"
 
+namespace weather
+{
+
 //------------------------------------------------------------------------------
 // BinaryWriteStream
 //------------------------------------------------------------------------------
@@ -245,3 +248,5 @@ private:
 
     uint32_t m_maxSizedField;
 };
+
+} // end of namespace weather
