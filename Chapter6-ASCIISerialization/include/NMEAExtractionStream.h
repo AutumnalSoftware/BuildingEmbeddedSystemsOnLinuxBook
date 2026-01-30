@@ -7,8 +7,8 @@
 #include <optional>
 #include <string_view>
 
-#include "nmea/NMEAStatus.h"
-#include "nmea/NMEATokenizer.h"
+#include "NMEAStatus.h"
+#include "NMEATokenizer.h"
 
 namespace weather
 {

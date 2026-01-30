@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <string_view>
 
-#include "nmea/NMEAStatus.h"
+#include "NMEAStatus.h"
 
 namespace weather
 {

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ch6_nmea_iter_no_framer LANGUAGES CXX)
+project(ch6_nmea LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -9,10 +9,10 @@ add_library(nmea
     src/NMEAExtractionStream.cpp
     src/NMEAInsertionStream.cpp
 
-    include/nmea/NMEAStatus.h
-    include/nmea/NMEATokenizer.h
-    include/nmea/NMEAExtractionStream.h
-    include/nmea/NMEAInsertionStream.h
+    include/NMEAStatus.h
+    include/NMEATokenizer.h
+    include/NMEAExtractionStream.h
+    include/NMEAInsertionStream.h
 )
 
 target_include_directories(nmea PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

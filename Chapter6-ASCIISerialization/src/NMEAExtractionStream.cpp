@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Mark Wilson
 
-#include "nmea/NMEAExtractionStream.h"
+#include "NMEAExtractionStream.h"
 
 #include <charconv>
 #include <cerrno>

@@ -5,9 +5,9 @@
 #include <optional>
 #include <string_view>
 
-#include "nmea/NMEATokenizer.h"
-#include "nmea/NMEAExtractionStream.h"
-#include "nmea/NMEAInsertionStream.h"
+#include "NMEATokenizer.h"
+#include "NMEAExtractionStream.h"
+#include "NMEAInsertionStream.h"
 
 struct ExamplePosSentence
 {

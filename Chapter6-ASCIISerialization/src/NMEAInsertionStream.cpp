@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Mark Wilson
 
-#include "nmea/NMEAInsertionStream.h"
+#include "NMEAInsertionStream.h"
 
 #include <array>
 #include <charconv>

@@ -6,9 +6,9 @@
 #include <string_view>
 #include <vector>
 
-#include "nmea/NMEATokenizer.h"
-#include "nmea/NMEAExtractionStream.h"
-#include "nmea/NMEAInsertionStream.h"
+#include "NMEATokenizer.h"
+#include "NMEAExtractionStream.h"
+#include "NMEAInsertionStream.h"
 
 static int g_failures = 0;
 
