@@ -8,7 +8,7 @@
 #include <cmath>
 #include <cstdio>
 
-namespace nmea
+namespace weather
 {
     static bool isFinite(double v) noexcept
     {
@@ -28,7 +28,7 @@ namespace nmea
         m_sentence.append(identifier.data(), identifier.size());
     }
 
-    Status InsertionStream::status() const noexcept
+    weather::Status InsertionStream::status() const noexcept
     {
         return m_status;
     }

@@ -15,7 +15,7 @@ static int g_failures = 0;
 #define CHECK(expr) do { if(!(expr)) { ++g_failures; std::cerr << "FAIL: " #expr " @ " << __FILE__ << ":" << __LINE__ << "\n"; } } while(0)
 #define CHECK_OK(st) CHECK((st).ok())
 
-static std::vector<std::string_view> collectFields(const nmea::Tokenizer& tok)
+static std::vector<std::string_view> collectFields(const weather::Tokenizer& tok)
 {
     std::vector<std::string_view> v;
     for (auto it = tok.begin(); it != tok.end(); ++it)
@@ -28,7 +28,7 @@ static std::vector<std::string_view> collectFields(const nmea::Tokenizer& tok)
 static void test_checksum_and_identifier()
 {
     const std::string_view s = "$GPXYZ,1,2,3*50\r\n";
-    nmea::Tokenizer tok(s);
+    weather::Tokenizer tok(s);
     CHECK(tok.status().ok());
     CHECK(tok.checksumValid());
     CHECK(tok.valid());
@@ -45,7 +45,7 @@ static void test_checksum_and_identifier()
 static void test_empty_fields_preserved()
 {
     const std::string_view s = "$GPXYZ,1,,3*62\n";
-    nmea::Tokenizer tok(s);
+    weather::Tokenizer tok(s);
     CHECK(tok.valid());
     CHECK(tok.fieldCount() == 3);
 
@@ -59,7 +59,7 @@ static void test_empty_fields_preserved()
 static void test_trailing_comma_produces_empty_final_field()
 {
     const std::string_view s = "$GPXYZ,1,2,*63\n";
-    nmea::Tokenizer tok(s);
+    weather::Tokenizer tok(s);
     CHECK(tok.valid());
     CHECK(tok.fieldCount() == 3);
 
@@ -73,10 +73,10 @@ static void test_trailing_comma_produces_empty_final_field()
 static void test_required_vs_optional()
 {
     const std::string_view s = "$GPXYZ,1,,3*62\n";
-    nmea::Tokenizer tok(s);
+    weather::Tokenizer tok(s);
     CHECK(tok.valid());
 
-    nmea::ExtractionStream xs(tok);
+    weather::ExtractionStream xs(tok);
 
     int a = 0;
     CHECK_OK(xs.readInt(a));
@@ -85,9 +85,9 @@ static void test_required_vs_optional()
     int b = 0;
     auto st = xs.readInt(b);
     CHECK(!st.ok());
-    CHECK(st.code == nmea::ErrorCode::FieldEmpty);
+    CHECK(st.code == weather::ErrorCode::FieldEmpty);
 
-    nmea::ExtractionStream xs2(tok);
+    weather::ExtractionStream xs2(tok);
 
     std::optional<int> oa;
     std::optional<int> ob;
@@ -106,7 +106,7 @@ static void test_required_vs_optional()
 
 static void test_inserter_round_trip()
 {
-    nmea::InsertionStream ins("GPXYZ");
+    weather::InsertionStream ins("GPXYZ");
     std::optional<std::string_view> a = std::string_view("1");
     std::optional<int> b = 2;
     std::optional<int> empty;
@@ -118,7 +118,7 @@ static void test_inserter_round_trip()
     CHECK_OK(ins.writeOptionalDouble(d));
     CHECK_OK(ins.finalize(false));
 
-    nmea::Tokenizer tok(ins.sentence());
+    weather::Tokenizer tok(ins.sentence());
     CHECK(tok.status().ok());
     CHECK(tok.checksumValid());
     CHECK(tok.valid());
@@ -135,12 +135,12 @@ static void test_inserter_round_trip()
 
 static void test_inserter_trailing_empty_field()
 {
-    nmea::InsertionStream ins("GPXYZ");
+    weather::InsertionStream ins("GPXYZ");
     CHECK_OK(ins.writeInt(1));
     CHECK_OK(ins.writeEmpty());
     CHECK_OK(ins.finalize(false));
 
-    nmea::Tokenizer tok(ins.sentence());
+    weather::Tokenizer tok(ins.sentence());
     CHECK(tok.valid());
     CHECK(tok.fieldCount() == 2);
 
@@ -153,10 +153,10 @@ static void test_inserter_trailing_empty_field()
 static void test_missing_field_is_error_even_for_optional()
 {
     const std::string_view s = "$GPXYZ,1,2*4F\n";
-    nmea::Tokenizer tok(s);
+    weather::Tokenizer tok(s);
     CHECK(tok.valid());
 
-    nmea::ExtractionStream xs(tok);
+    weather::ExtractionStream xs(tok);
     std::optional<int> a;
     std::optional<int> b;
     std::optional<int> c;
@@ -166,7 +166,7 @@ static void test_missing_field_is_error_even_for_optional()
 
     auto st = xs.readOptionalInt(c);
     CHECK(!st.ok());
-    CHECK(st.code == nmea::ErrorCode::FieldMissing);
+    CHECK(st.code == weather::ErrorCode::FieldMissing);
 }
 
 int main()

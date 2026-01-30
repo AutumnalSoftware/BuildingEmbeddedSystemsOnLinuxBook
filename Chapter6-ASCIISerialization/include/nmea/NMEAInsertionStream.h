@@ -10,7 +10,7 @@
 
 #include "nmea/NMEAStatus.h"
 
-namespace nmea
+namespace weather
 {
     // Builds an NMEA sentence by appending comma-separated fields and a checksum.
     //

@@ -22,14 +22,14 @@ struct ExamplePosSentence
 
 static bool parseExamplePos(std::string_view sentence, ExamplePosSentence& out)
 {
-    nmea::Tokenizer tok(sentence);
+    weather::Tokenizer tok(sentence);
     if (!tok.valid()) return false;
 
     out.checksumOk = tok.checksumValid();
     out.talker = tok.identifier().substr(0, 2);
     out.type   = tok.identifier().substr(2, 3);
 
-    nmea::ExtractionStream xs(tok);
+    weather::ExtractionStream xs(tok);
 
     std::optional<std::string_view> time;
     xs.readOptionalString(time);
@@ -44,7 +44,7 @@ static bool parseExamplePos(std::string_view sentence, ExamplePosSentence& out)
 
 int main()
 {
-    nmea::InsertionStream ins("GPXYZ");
+    weather::InsertionStream ins("GPXYZ");
 
     ins.writeOptionalString(std::optional<std::string_view>("123519"));
     ins.writeDouble(4807.038);

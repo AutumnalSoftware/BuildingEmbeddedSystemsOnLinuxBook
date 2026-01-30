@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <string_view>
 
-namespace nmea
+namespace weather
 {
     enum class ErrorCode : std::uint8_t
     {
@@ -45,4 +45,5 @@ namespace nmea
         constexpr bool ok() const noexcept { return code == ErrorCode::Ok; }
         static constexpr Status Ok() noexcept { return { ErrorCode::Ok, 0, {} }; }
     };
+
 } // namespace nmea

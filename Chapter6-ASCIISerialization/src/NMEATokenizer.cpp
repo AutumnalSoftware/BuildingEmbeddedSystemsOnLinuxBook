@@ -5,7 +5,7 @@
 
 #include <algorithm>
 
-namespace nmea
+namespace weather
 {
     Tokenizer::FieldIterator::FieldIterator(std::string_view payload, std::size_t start, bool atEnd)
         : m_payload(payload)

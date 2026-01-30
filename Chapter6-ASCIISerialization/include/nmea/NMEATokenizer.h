@@ -9,7 +9,7 @@
 
 #include "nmea/NMEAStatus.h"
 
-namespace nmea
+namespace weather
 {
     // Tokenizes a single NMEA sentence string.
     //

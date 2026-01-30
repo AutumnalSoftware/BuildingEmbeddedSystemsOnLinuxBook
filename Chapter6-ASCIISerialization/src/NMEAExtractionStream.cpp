@@ -8,7 +8,7 @@
 #include <cmath>
 #include <cstdlib>
 
-namespace nmea
+namespace weather
 {
     ExtractionStream::ExtractionStream(const Tokenizer& tokens)
         : m_tokens(tokens)

@@ -10,7 +10,7 @@
 #include "nmea/NMEAStatus.h"
 #include "nmea/NMEATokenizer.h"
 
-namespace nmea
+namespace weather
 {
     // Sequential typed extraction over tokenized NMEA data fields.
     //
