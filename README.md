@@ -8,18 +8,13 @@ This repository contains companion code for
 **Designing Deterministic Systems with Modern C++: Host-First Development on Linux**  
 https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach
 
-Each chapter directory corresponds to code discussed in the book, covering topics such as:
+Each chapter directory corresponds directly to code discussed in the book, covering topics such as:
 
 * modern C++ type erasure
-
 * deterministic pipelines
-
 * serialization and messaging
-
 * system composition and control
-
 * host-based embedded development
-
 * and real-world system architecture patterns
 
 A free sample chapter is available at the link above.
