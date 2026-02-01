@@ -1,12 +1,12 @@
-# Designing Deterministic Systems with Modern C++ (actual book title)
+# Designing Deterministic Systems with Modern C++
+
+_(Formerly **Building Embedded Systems on Linux: A Modern C++ Approach**.)_
 
 ## About This Repository
 
 This repository contains companion code for  
 **Designing Deterministic Systems with Modern C++: Host-First Development on Linux**  
 https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach
-
-(Formerly **Building Embedded Systems on Linux: A Modern C++ Approach**.)
 
 Each chapter directory corresponds to code discussed in the book, covering topics such as:
 
