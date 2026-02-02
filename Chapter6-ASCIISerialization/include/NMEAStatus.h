@@ -46,4 +46,4 @@ namespace weather
         static constexpr Status Ok() noexcept { return { ErrorCode::Ok, 0, {} }; }
     };
 
-} // namespace nmea
+} // namespace weather

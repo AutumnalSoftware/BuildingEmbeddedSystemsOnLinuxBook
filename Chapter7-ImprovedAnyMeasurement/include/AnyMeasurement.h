@@ -17,11 +17,12 @@ namespace weather {
 
 class InsertionStream;
 class BinaryWriteStream;
+struct Status;
 
 template <typename T>
 struct MeasurementSerializationTraits
 {
-    static Status nmea(InsertionStream&, const T&) noexcept
+    static weather::Status nmea(InsertionStream&, const T&) noexcept
     {
         return Status::Ok();
     }

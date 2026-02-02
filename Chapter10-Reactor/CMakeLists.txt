@@ -1,27 +1,30 @@
 cmake_minimum_required(VERSION 3.16)
-project(ch6_nmea_iter_no_framer LANGUAGES CXX)
+project(reactor LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(nmea
-    src/NMEATokenizer.cpp
-    src/NMEAExtractionStream.cpp
-    src/NMEAInsertionStream.cpp
+#add_library(reactor
+#    #/include/SensorContext.h
+    #/src/context.cpp
+#)
 
-    include/nmea/NMEAStatus.h
-    include/nmea/NMEATokenizer.h
-    include/nmea/NMEAExtractionStream.h
-    include/nmea/NMEAInsertionStream.h
-)
+#target_include_directories(reactor PUBLIC
+    #${CMAKE_CURRENT_SOURCE_DIR}/include
+    #${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
+    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter5-BinarySerialization/include
+    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
+    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter7-ImprovedAnyMeasurement/include
+#)
 
-target_include_directories(nmea PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+#add_executable(reactor_demo examples/reactor_demo.cpp)
+#target_link_libraries(reactor_demo PRIVATE reactor)
 
-add_executable(nmea_demo examples/nmea_demo.cpp)
-target_link_libraries(nmea_demo PRIVATE nmea)
+#add_executable(reactor_tests tests/test_reactor.cpp)
+#target_link_libraries(reactor_tests PRIVATE reactor)
 
-add_executable(nmea_tests tests/test_nmea.cpp)
-target_link_libraries(nmea_tests PRIVATE nmea)
+add_executable(epollPrimer epollPrimer/epollPrimer.cpp)
+#target_link_libraries(epollPrimer PRIVATE reactor)
 
-enable_testing()
-add_test(NAME nmea_tests COMMAND nmea_tests)
+#enable_testing()
+#add_test(NAME reactor_tests COMMAND reactor_tests)
