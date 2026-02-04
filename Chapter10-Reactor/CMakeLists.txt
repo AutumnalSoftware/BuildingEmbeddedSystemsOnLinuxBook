@@ -1,30 +1,44 @@
 cmake_minimum_required(VERSION 3.16)
-project(reactor LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(Chapter10ReactorDemo LANGUAGES CXX)
 
-#add_library(reactor
-#    #/include/SensorContext.h
-    #/src/context.cpp
-#)
+add_library(reactor STATIC
+    src/SensorContext.cpp
+    src/UdpSensor.cpp
 
-#target_include_directories(reactor PUBLIC
-    #${CMAKE_CURRENT_SOURCE_DIR}/include
-    #${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
-    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter5-BinarySerialization/include
-    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
-    #${CMAKE_CURRENT_SOURCE_DIR}/../Chapter7-ImprovedAnyMeasurement/include
-#)
+    include/SensorContext.h
+    include/UdpSensor.h
+    include/FrameStatus.h
+    include/PortStats.h
+)
 
-#add_executable(reactor_demo examples/reactor_demo.cpp)
-#target_link_libraries(reactor_demo PRIVATE reactor)
+target_compile_features(reactor PUBLIC cxx_std_17)
 
-#add_executable(reactor_tests tests/test_reactor.cpp)
-#target_link_libraries(reactor_tests PRIVATE reactor)
+target_include_directories(reactor PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-add_executable(epollPrimer epollPrimer/epollPrimer.cpp)
-#target_link_libraries(epollPrimer PRIVATE reactor)
+# Adjust these include dirs to match your Chapter 10 repo layout if needed.
+target_include_directories(reactor PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter7-ImprovedAnyMeasurement/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
+)
 
-#enable_testing()
-#add_test(NAME reactor_tests COMMAND reactor_tests)
+add_executable(reactor_demo
+    demo/main.cpp
+)
+
+target_compile_features(reactor_demo PUBLIC cxx_std_17)
+
+target_link_libraries(reactor_demo PRIVATE reactor pthread)
+
+target_include_directories(reactor_demo PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
+)
+
+target_compile_options(reactor PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(reactor_demo PRIVATE -Wall -Wextra -Wpedantic)
