@@ -1,5 +1,7 @@
 Chapter 7 – AnyMeasurement (Final Snapshot)
 
+This repository accompanies Chapter 7 of _Designing Deterministic Systems with Modern C++_.
+
 This archive is a clean snapshot intended for the Chapter 7 walkthrough.
 
 Guarantees:
