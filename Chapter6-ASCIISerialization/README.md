@@ -1,5 +1,7 @@
 # Chapter 6 - ASCII Data Serialization with NMEA (Iterator Tokenization, No Framer)
 
+This repository accompanies Chapter 6 of _Designing Deterministic Systems with Modern C++_.
+
 This variant focuses on tokenization + extraction only.
 
 - Tokenizer performs structural checks, identifier extraction, checksum verification,
