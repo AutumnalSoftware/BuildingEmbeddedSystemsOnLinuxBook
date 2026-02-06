@@ -3,6 +3,8 @@
 
 # Chapter 9 - System Controller (Snapshot)
 
+This repository accompanies Chapter 9 of _Designing Deterministic Systems with Modern C++_.
+
 This Chapter 9 demo is about system composition and control.
 
 - Uses `std::thread`
