@@ -6,7 +6,7 @@ namespace weather
 static void unconfigured_destroy(void*) noexcept {}
 static void unconfigured_move(void*, void*) noexcept { assert(false); }
 static int unconfigured_fd(const void*) noexcept { assert(false); return -1; }
-static Status unconfigured_read(void*) noexcept { assert(false); return Status::Ok(); }
+static Status unconfigured_read(void*) noexcept { assert(false); return Status{}; }
 
 static const SensorContext::Ops& UnconfiguredOps() noexcept
 {

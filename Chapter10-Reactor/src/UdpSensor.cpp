@@ -48,9 +48,9 @@ struct UdpSensorImpl
             ssize_t n = recv(fd, rx.data(), rx.size(), 0);
             if (n < 0)
             {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) return Status::Ok();
+                if (errno == EAGAIN || errno == EWOULDBLOCK) return Status{};
                 stats.frames_dropped++;
-                return Status::Ok();
+                return Status{};
             }
 
             stats.frames_received++;

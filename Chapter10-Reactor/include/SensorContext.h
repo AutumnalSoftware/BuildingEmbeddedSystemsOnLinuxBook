@@ -1,8 +1,12 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
+
 #pragma once
 
 #include <cstddef>
 #include <cstdint>
-#include "NMEAStatus.h"
+
+#include "Status.h"
 
 namespace moodycamel { template <typename T, std::size_t N> class ReaderWriterQueue; }
 
@@ -55,5 +59,13 @@ private:
                                      std::size_t maxMessageSize) noexcept;
 
     friend const PortStats* udp_stats(const SensorContext& ctx) noexcept;
+
+    friend void configure_uart_nmea_sensor(SensorContext& ctx,
+                                      const char* devicePath,
+                                      int baud,
+                                      moodycamel::ReaderWriterQueue<AnyMeasurement, 128>& outQ,
+                                      std::size_t maxLineBytes) noexcept;
+
+    friend const PortStats* uart_stats(const SensorContext& ctx) noexcept;
 };
 }
