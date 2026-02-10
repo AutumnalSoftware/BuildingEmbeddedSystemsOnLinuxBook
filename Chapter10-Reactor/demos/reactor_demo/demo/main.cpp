@@ -43,12 +43,12 @@ int main()
     // UDP port 3450, max message size 2048.
     weather::configure_udp_sensor(sensors[0], 3450, q, 2048);
 
-// UART NMEA line framing via socat PTYs.
-// Terminal 1:
-//   socat -d -d pty,raw,echo=0,link=/tmp/uartA pty,raw,echo=0,link=/tmp/uartB
-// Terminal 2 (send a line):
-//   echo -ne '$GPGGA,HELLO*00\r\n' > /tmp/uartB
-weather::configure_uart_nmea_sensor(sensors[1], "/tmp/uartA", 9600, q, 128);
+    // UART NMEA line framing via socat PTYs.
+    // Terminal 1:
+    //   socat -d -d pty,raw,echo=0,link=/tmp/uartA pty,raw,echo=0,link=/tmp/uartB
+    // Terminal 2 (send a line):
+    //   echo -ne '$GPGGA,HELLO*00\r\n' > /tmp/uartB
+    weather::configure_uart_nmea_sensor(sensors[1], "/tmp/uartA", 9600, q, 128);
 
     const int epfd = ::epoll_create1(0);
     if (epfd < 0)
