@@ -37,6 +37,8 @@ public:
     void consumer(const std::atomic<bool>& stop);
     void logger(const std::atomic<bool>& stop);
 
+    void external_inputs(const std::atomic<bool>& stop);
+
 private:
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement, 128>& m_inQ;
     moodycamel::ReaderWriterQueue<LogEvent>& m_logQ;

@@ -8,7 +8,8 @@ BuildStatus WeatherSystemBuilder::build(WeatherSystem& system) const
 {
     system.setThreadEntry(0, [&system](const std::atomic<bool>& stop)
     {
-        system.runLoops().producer(stop);
+        system.runLoops().external_inputs(stop);
+
     });
 
     system.setThreadEntry(1, [&system](const std::atomic<bool>& stop)
