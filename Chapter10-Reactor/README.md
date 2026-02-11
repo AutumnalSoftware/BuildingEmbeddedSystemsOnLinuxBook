@@ -28,8 +28,10 @@ The full design rationale, tradeoffs, and progression from Chapter 10 are explai
 
 # Building
 
-``` cmake -S . -B build
-``` cmake --build build
+```
+cmake -S . -B build
+cmake --build build
+```
 
 # Running the System
 
