@@ -1,4 +1,4 @@
-## Chapter 10 — External Integration
+# Chapter 10 — External Integration
 
 This repository accompanies Chapter 10 of [Designing Deterministic Systems with Modern C++](https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach).
 
@@ -28,15 +28,14 @@ The full design rationale, tradeoffs, and progression from Chapter 10 are explai
 
 # Building
 
-cmake -S . -B build
-cmake --build build
+``` cmake -S . -B build
+``` cmake --build build
 
 # Running the System
 
 In one terminal:
 
 ./build/your_binary_name
-
 
 The reactor will start and wait for external input.
 
