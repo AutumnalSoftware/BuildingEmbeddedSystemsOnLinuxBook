@@ -62,7 +62,7 @@ done | nc -u -w1 127.0.0.1 3450
 
 (Replace port if needed.)
 
-Simulating UART via _socat_ (Stream-Oriented)
+# Simulating UART via _socat_ (Stream-Oriented)
 
 Create a pseudo-terminal pair:
 
