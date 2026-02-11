@@ -1,4 +1,4 @@
-Chapter 10 — External Integration Without Architectural Drift
+## Chapter 10 — External Integration Without Architectural Drift
 
 This repository accompanies Chapter 10 of [Designing Deterministic Systems with Modern C++](https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach).
 
