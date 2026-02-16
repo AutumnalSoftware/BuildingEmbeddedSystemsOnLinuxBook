@@ -135,8 +135,8 @@ int main()
         {
             weather::BinaryWriteStream fw(frameBuf, HeaderWireEndianness);
 
-            MessageHeaderV1 zeroHeader;
-            std::memset(&zeroHeader, 0, sizeof(zeroHeader));
+            MessageHeaderV1 zeroHeader{};
+            //std::memset(&zeroHeader, 0, sizeof(zeroHeader));
 
             // Header bytes are treated as raw bytes in this reserve step.
             fw.writeBytes(ImmutableByteView(&zeroHeader, sizeof(zeroHeader)));
