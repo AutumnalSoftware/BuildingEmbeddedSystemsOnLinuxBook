@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Mark Wilson
+
 //
 // BinaryDataStream demo (C++17, embedded-friendly, no exceptions)
 //
