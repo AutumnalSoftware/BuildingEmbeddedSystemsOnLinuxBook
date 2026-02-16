@@ -18,17 +18,6 @@ enum class MeasurementKind : std::uint16_t {
     Position
 };
 
-enum class SourceId : std::uint16_t {
-    Unknown
-};
-
-struct MeasurementHeaderV1 {
-    std::uint64_t rxTime = 0;
-    std::uint64_t eventTime = 0;
-    MeasurementKind kind = MeasurementKind::Empty;
-    SourceId source = SourceId::Unknown;
-    std::uint32_t flags = 0;
-};
 
 // Empty payload used for scratch / sentinel measurements
 struct Empty {};

@@ -5,12 +5,13 @@
 
 #include "MeasurementTypes.h"
 
-#include "NMEAStatus.h"
+#include "Status.h"
 
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <type_traits>
+#include <new>
 #include <utility>
 
 namespace weather {
@@ -24,7 +25,7 @@ struct MeasurementSerializationTraits
 {
     static weather::Status nmea(InsertionStream&, const T&) noexcept
     {
-        return Status::Ok();
+        return Status{};
     }
 
     static void bds(BinaryWriteStream&, const T&) noexcept
@@ -184,7 +185,7 @@ private:
     static void empty_move_construct(void*, void*) noexcept {}
     static Status empty_nmea_write(InsertionStream&, const void*) noexcept
     {
-        return Status::Ok();
+        return Status{};
     }
 
     static void empty_bds_write(BinaryWriteStream&, const void*) noexcept
