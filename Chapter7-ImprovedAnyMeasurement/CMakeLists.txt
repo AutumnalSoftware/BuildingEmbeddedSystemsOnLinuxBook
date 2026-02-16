@@ -25,6 +25,8 @@ add_executable(anymeasurement_demo
     include/MeasurementTypesIO.h
     include/MeasurementNameOf.h
     include/MeasurementKindStrings.h
+    include/MeasurementCodecs.h
+    demo/MeasurementCodecs.cpp
 )
 target_link_libraries(anymeasurement_demo PRIVATE AnyMeasurement)
 
@@ -32,6 +34,7 @@ add_executable(anymeasurement_tests
     tests/AnyMeasurementTests.cpp
     include/AnyMeasurement.h
     include/MeasurementTypes.h
+    include/MeasurementCodecs.h
 )
 
 target_include_directories(anymeasurement_tests PUBLIC
@@ -39,6 +42,10 @@ target_include_directories(anymeasurement_tests PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include/nmea
     ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+)
+
+target_include_directories(anymeasurement_demo PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter5-BinarySerialization
 )
 
 target_link_libraries(anymeasurement_tests PRIVATE AnyMeasurement)
