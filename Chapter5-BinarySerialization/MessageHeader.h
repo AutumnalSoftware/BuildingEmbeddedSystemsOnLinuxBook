@@ -41,6 +41,7 @@ struct MessageHeaderV1
     std::uint8_t  payloadChecksum = 0;  // XOR of payload bytes
     std::uint16_t reserved = 0;         // must be 0 in v1
 };
+
 static_assert(sizeof(MessageHeaderV1) == 24, "MessageHeaderV1 must be fixed size");
 static_assert(std::is_standard_layout<MessageHeaderV1>::value,
               "MessageHeaderV1 must be standard-layout for offsetof()");
