@@ -9,13 +9,16 @@ add_library(nmea
     src/NMEAExtractionStream.cpp
     src/NMEAInsertionStream.cpp
 
-    include/NMEAStatus.h
+    include/NMEAParseStatus.h
     include/NMEATokenizer.h
     include/NMEAExtractionStream.h
     include/NMEAInsertionStream.h
 )
 
-target_include_directories(nmea PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(nmea PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+)
 
 add_executable(nmea_demo examples/nmea_demo.cpp)
 target_link_libraries(nmea_demo PRIVATE nmea)

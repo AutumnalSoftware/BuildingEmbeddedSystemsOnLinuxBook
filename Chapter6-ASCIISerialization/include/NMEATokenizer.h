@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <string_view>
 
-#include "NMEAStatus.h"
+#include "NMEAParseStatus.h"
 
 namespace weather
 {
@@ -54,7 +54,7 @@ namespace weather
         bool valid() const noexcept;
 
         // Structural status. Note: checksum mismatch does not set an error code; use checksumValid().
-        Status status() const noexcept;
+        NmeaParseStatus status() const noexcept;
 
         std::string_view sentence() const noexcept;
 
@@ -82,6 +82,6 @@ namespace weather
         std::size_t m_fieldCount = 0;
 
         bool m_checksumValid = false;
-        Status m_status = Status::Ok();
+        NmeaParseStatus m_status{};
     };
 } // namespace nmea

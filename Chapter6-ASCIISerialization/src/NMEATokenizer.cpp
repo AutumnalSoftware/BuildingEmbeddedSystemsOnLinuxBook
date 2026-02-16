@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Mark Wilson
 
 #include "NMEATokenizer.h"
+#include "Status.h"
 
 #include <algorithm>
 
@@ -97,7 +98,7 @@ namespace weather
         return m_status.ok() && m_checksumValid;
     }
 
-    Status Tokenizer::status() const noexcept
+    NmeaParseStatus Tokenizer::status() const noexcept
     {
         return m_status;
     }
@@ -168,11 +169,11 @@ namespace weather
         m_hasPayload = false;
         m_fieldCount = 0;
         m_checksumValid = false;
-        m_status = Status::Ok();
+        m_status = NmeaParseStatus{};
 
         if (m_sentence.empty())
         {
-            m_status.code = ErrorCode::EmptyInput;
+            m_status.code = NmeaParseErrorCode::EmptyInput;
             return;
         }
 
@@ -182,13 +183,13 @@ namespace weather
         }
         if (m_sentence.empty())
         {
-            m_status.code = ErrorCode::EmptyInput;
+            m_status.code = NmeaParseErrorCode::EmptyInput;
             return;
         }
 
         if (m_sentence.front() != '$')
         {
-            m_status.code = ErrorCode::MissingStartDelimiter;
+            m_status.code = NmeaParseErrorCode::MissingStartDelimiter;
             m_status.context = m_sentence;
             return;
         }
@@ -196,14 +197,14 @@ namespace weather
         const std::size_t starPos = m_sentence.find('*');
         if (starPos == std::string_view::npos)
         {
-            m_status.code = ErrorCode::MissingChecksumDelimiter;
+            m_status.code = NmeaParseErrorCode::MissingChecksumDelimiter;
             m_status.context = m_sentence;
             return;
         }
 
         if (starPos + 2 >= m_sentence.size())
         {
-            m_status.code = ErrorCode::MissingChecksumValue;
+            m_status.code = NmeaParseErrorCode::MissingChecksumValue;
             m_status.context = m_sentence.substr(starPos);
             return;
         }
@@ -212,7 +213,7 @@ namespace weather
         const char h2 = m_sentence[starPos + 2];
         if (!isHexDigit(h1) || !isHexDigit(h2))
         {
-            m_status.code = ErrorCode::InvalidChecksumValue;
+            m_status.code = NmeaParseErrorCode::InvalidChecksumValue;
             m_status.context = m_sentence.substr(starPos, std::min<std::size_t>(3, m_sentence.size() - starPos));
             return;
         }
@@ -227,7 +228,7 @@ namespace weather
 
         if (between.size() < 5)
         {
-            m_status.code = ErrorCode::MissingIdentifier;
+            m_status.code = NmeaParseErrorCode::MissingIdentifier;
             m_status.context = between;
             return;
         }
@@ -244,7 +245,7 @@ namespace weather
 
         if (between[5] != ',')
         {
-            m_status.code = ErrorCode::InvalidIdentifierLength;
+            m_status.code = NmeaParseErrorCode::InvalidIdentifierLength;
             m_status.context = between.substr(0, std::min<std::size_t>(16, between.size()));
             return;
         }

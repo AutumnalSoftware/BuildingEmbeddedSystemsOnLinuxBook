@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2026 Mark Wilson
+// Copyright (c) 2025 Autumnal Software
 
 #pragma once
 
@@ -9,21 +9,22 @@
 
 namespace weather
 {
-    enum class ErrorCode : std::uint8_t
+    enum class NmeaParseErrorCode : std::uint8_t
     {
         Ok = 0,
 
-        // Framing / structural
+        // Framing
         EmptyInput,
         MissingStartDelimiter,
         MissingChecksumDelimiter,
         MissingChecksumValue,
         InvalidChecksumValue,
+
+        // Structure
         MissingIdentifier,
         InvalidIdentifierLength,
-
-        // Insertion
         AlreadyFinalized,
+        OutputBufferTooSmall,
 
         // Field access
         FieldMissing,
@@ -36,14 +37,16 @@ namespace weather
         InvalidChar
     };
 
-    struct Status
+    struct NmeaParseStatus
     {
-        ErrorCode code = ErrorCode::Ok;
-        std::size_t fieldIndex = 0;   // which data field failed (0-based), when applicable
-        std::string_view context{};   // optional view into the original sentence (for debugging)
+        NmeaParseErrorCode code = NmeaParseErrorCode::Ok;
+        std::size_t fieldIndex = 0;
+        std::string_view context{};
 
-        constexpr bool ok() const noexcept { return code == ErrorCode::Ok; }
-        static constexpr Status Ok() noexcept { return { ErrorCode::Ok, 0, {} }; }
+        bool ok() const noexcept
+        {
+            return code == NmeaParseErrorCode::Ok;
+        }
     };
+}
 
-} // namespace weather

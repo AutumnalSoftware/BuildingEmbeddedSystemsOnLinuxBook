@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-#include "NMEAStatus.h"
+#include "NMEAParseStatus.h"
 
 namespace weather
 {
@@ -22,33 +22,33 @@ namespace weather
     public:
         explicit InsertionStream(std::string_view identifier);
 
-        Status status() const noexcept;
+        NmeaParseStatus status() const noexcept;
 
-        Status writeString(std::string_view v);
-        Status writeChar(char v);
-        Status writeInt(int v);
-        Status writeDouble(double v);
+        NmeaParseStatus writeString(std::string_view v);
+        NmeaParseStatus writeChar(char v);
+        NmeaParseStatus writeInt(int v);
+        NmeaParseStatus writeDouble(double v);
 
-        Status writeOptionalString(const std::optional<std::string_view>& v);
-        Status writeOptionalChar(const std::optional<char>& v);
-        Status writeOptionalInt(const std::optional<int>& v);
-        Status writeOptionalDouble(const std::optional<double>& v);
+        NmeaParseStatus writeOptionalString(const std::optional<std::string_view>& v);
+        NmeaParseStatus writeOptionalChar(const std::optional<char>& v);
+        NmeaParseStatus writeOptionalInt(const std::optional<int>& v);
+        NmeaParseStatus writeOptionalDouble(const std::optional<double>& v);
 
-        Status writeEmpty();
+        NmeaParseStatus writeEmpty();
 
-        Status finalize(bool appendCRLF = true);
+        NmeaParseStatus finalize(bool appendCRLF = true);
 
         bool finalized() const noexcept;
         const std::string& sentence() const noexcept;
 
     private:
         void appendFieldPrefix();
-        void setError(ErrorCode code) noexcept;
+        void setError(NmeaParseErrorCode code) noexcept;
 
         static std::uint8_t computeXor(std::string_view betweenDollarAndStar) noexcept;
         static void appendChecksum(std::string& out, std::uint8_t checksum);
 
-        Status m_status = Status::Ok();
+        NmeaParseStatus m_status{};
         std::string m_sentence;
         bool m_finalized = false;
     };

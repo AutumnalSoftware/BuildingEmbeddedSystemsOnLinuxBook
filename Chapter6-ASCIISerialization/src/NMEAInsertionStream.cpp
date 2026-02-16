@@ -19,7 +19,7 @@ namespace weather
     {
         if (identifier.size() != 5)
         {
-            setError(ErrorCode::InvalidIdentifierLength);
+            setError(NmeaParseErrorCode::InvalidIdentifierLength);
             return;
         }
 
@@ -28,12 +28,12 @@ namespace weather
         m_sentence.append(identifier.data(), identifier.size());
     }
 
-    weather::Status InsertionStream::status() const noexcept
+    weather::NmeaParseStatus InsertionStream::status() const noexcept
     {
         return m_status;
     }
 
-    void InsertionStream::setError(ErrorCode code) noexcept
+    void InsertionStream::setError(NmeaParseErrorCode code) noexcept
     {
         if (m_status.ok())
         {
@@ -46,30 +46,30 @@ namespace weather
         m_sentence.push_back(',');
     }
 
-    Status InsertionStream::writeString(std::string_view v)
+    NmeaParseStatus InsertionStream::writeString(std::string_view v)
     {
         if (!m_status.ok()) return m_status;
-        if (m_finalized) { setError(ErrorCode::AlreadyFinalized); return m_status; }
+        if (m_finalized) { setError(NmeaParseErrorCode::AlreadyFinalized); return m_status; }
 
         appendFieldPrefix();
         m_sentence.append(v.data(), v.size());
         return m_status;
     }
 
-    Status InsertionStream::writeChar(char v)
+    NmeaParseStatus InsertionStream::writeChar(char v)
     {
         if (!m_status.ok()) return m_status;
-        if (m_finalized) { setError(ErrorCode::AlreadyFinalized); return m_status; }
+        if (m_finalized) { setError(NmeaParseErrorCode::AlreadyFinalized); return m_status; }
 
         appendFieldPrefix();
         m_sentence.push_back(v);
         return m_status;
     }
 
-    Status InsertionStream::writeInt(int v)
+    NmeaParseStatus InsertionStream::writeInt(int v)
     {
         if (!m_status.ok()) return m_status;
-        if (m_finalized) { setError(ErrorCode::AlreadyFinalized); return m_status; }
+        if (m_finalized) { setError(NmeaParseErrorCode::AlreadyFinalized); return m_status; }
 
         appendFieldPrefix();
 
@@ -77,7 +77,7 @@ namespace weather
         auto res = std::to_chars(buf.data(), buf.data() + buf.size(), v);
         if (res.ec != std::errc())
         {
-            setError(ErrorCode::InvalidInteger);
+            setError(NmeaParseErrorCode::InvalidInteger);
             return m_status;
         }
 
@@ -85,14 +85,14 @@ namespace weather
         return m_status;
     }
 
-    Status InsertionStream::writeDouble(double v)
+    NmeaParseStatus InsertionStream::writeDouble(double v)
     {
         if (!m_status.ok()) return m_status;
-        if (m_finalized) { setError(ErrorCode::AlreadyFinalized); return m_status; }
+        if (m_finalized) { setError(NmeaParseErrorCode::AlreadyFinalized); return m_status; }
 
         if (!isFinite(v))
         {
-            setError(ErrorCode::InvalidDouble);
+            setError(NmeaParseErrorCode::InvalidDouble);
             return m_status;
         }
 
@@ -114,7 +114,7 @@ namespace weather
         int n = std::snprintf(buf.data(), buf.size(), "%.6f", v);
         if (n <= 0)
         {
-            setError(ErrorCode::InvalidDouble);
+            setError(NmeaParseErrorCode::InvalidDouble);
             return m_status;
         }
 
@@ -126,34 +126,34 @@ namespace weather
         return m_status;
     }
 
-    Status InsertionStream::writeOptionalString(const std::optional<std::string_view>& v)
+    NmeaParseStatus InsertionStream::writeOptionalString(const std::optional<std::string_view>& v)
     {
         if (!v.has_value()) return writeEmpty();
         return writeString(*v);
     }
 
-    Status InsertionStream::writeOptionalChar(const std::optional<char>& v)
+    NmeaParseStatus InsertionStream::writeOptionalChar(const std::optional<char>& v)
     {
         if (!v.has_value()) return writeEmpty();
         return writeChar(*v);
     }
 
-    Status InsertionStream::writeOptionalInt(const std::optional<int>& v)
+    NmeaParseStatus InsertionStream::writeOptionalInt(const std::optional<int>& v)
     {
         if (!v.has_value()) return writeEmpty();
         return writeInt(*v);
     }
 
-    Status InsertionStream::writeOptionalDouble(const std::optional<double>& v)
+    NmeaParseStatus InsertionStream::writeOptionalDouble(const std::optional<double>& v)
     {
         if (!v.has_value()) return writeEmpty();
         return writeDouble(*v);
     }
 
-    Status InsertionStream::writeEmpty()
+    NmeaParseStatus InsertionStream::writeEmpty()
     {
         if (!m_status.ok()) return m_status;
-        if (m_finalized) { setError(ErrorCode::AlreadyFinalized); return m_status; }
+        if (m_finalized) { setError(NmeaParseErrorCode::AlreadyFinalized); return m_status; }
 
         appendFieldPrefix();
         return m_status;
@@ -177,14 +177,14 @@ namespace weather
         out.push_back(hex[checksum & 0xF]);
     }
 
-    Status InsertionStream::finalize(bool appendCRLF)
+    NmeaParseStatus InsertionStream::finalize(bool appendCRLF)
     {
         if (!m_status.ok()) return m_status;
         if (m_finalized) return m_status;
 
         if (m_sentence.empty() || m_sentence.front() != '$')
         {
-            setError(ErrorCode::MissingStartDelimiter);
+            setError(NmeaParseErrorCode::MissingStartDelimiter);
             return m_status;
         }
 

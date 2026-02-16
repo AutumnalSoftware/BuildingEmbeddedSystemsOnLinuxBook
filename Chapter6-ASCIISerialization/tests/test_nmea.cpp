@@ -85,7 +85,7 @@ static void test_required_vs_optional()
     int b = 0;
     auto st = xs.readInt(b);
     CHECK(!st.ok());
-    CHECK(st.code == weather::ErrorCode::FieldEmpty);
+    CHECK(st.code == weather::NmeaParseErrorCode::FieldEmpty);
 
     weather::ExtractionStream xs2(tok);
 
@@ -166,7 +166,7 @@ static void test_missing_field_is_error_even_for_optional()
 
     auto st = xs.readOptionalInt(c);
     CHECK(!st.ok());
-    CHECK(st.code == weather::ErrorCode::FieldMissing);
+    CHECK(st.code == weather::NmeaParseErrorCode::FieldMissing);
 }
 
 int main()
