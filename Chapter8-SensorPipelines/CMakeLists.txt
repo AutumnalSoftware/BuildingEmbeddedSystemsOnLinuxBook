@@ -22,7 +22,7 @@ target_compile_features(SensorPipelineDemo PRIVATE cxx_std_17)
 target_include_directories(SensorPipelineDemo PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${CMAKE_CURRENT_LIST_DIR}/../ThirdParty/readerwriterqueue
-    ${CMAKE_CURRENT_LIST_DIR}/../Chapter7-ImprovedAnyMeasurement/include
+    ${CMAKE_CURRENT_LIST_DIR}/../Common/include
 )
 
 # Optional: tighten warnings

@@ -25,6 +25,7 @@ add_library(Common STATIC
 
     # Sources
     src/SourceId.cpp
+    src/MeasurementTypesStrings.cpp
 )
 
 target_include_directories(Common

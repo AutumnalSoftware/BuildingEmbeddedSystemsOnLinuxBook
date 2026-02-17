@@ -20,9 +20,7 @@ target_compile_features(reactor PUBLIC cxx_std_17)
 
 target_include_directories(reactor PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter6-ASCIISerialization/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Chapter7-ImprovedAnyMeasurement/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../Common
+    ${CMAKE_CURRENT_SOURCE_DIR}/../Common/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
 )
 

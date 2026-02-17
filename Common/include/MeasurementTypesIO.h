@@ -3,7 +3,10 @@
 
 #pragma once
 
+#include "MeasurementTypeStrings.h"
 #include "MeasurementTypes.h"
+#include "SourceId.h"
+#include "MeasurementHeaderV1.h"
 
 #include <ostream>
 #include <string_view>

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "MeasurementTypes.h"
+#include "MeasurementHeaderV1.h"
 
 #include "Status.h"
 

@@ -25,6 +25,7 @@ static void on_sigint(int)
     gStop.store(true);
 }
 
+[[maybe_unused]]
 static bool add_epoll(int epfd, weather::SensorContext& ctx)
 {
     epoll_event ev{};

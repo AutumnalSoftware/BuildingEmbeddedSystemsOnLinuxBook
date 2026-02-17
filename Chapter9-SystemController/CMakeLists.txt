@@ -17,7 +17,6 @@ add_executable(chapter9_demo
 
 target_include_directories(chapter9_demo PRIVATE
     include
-    ../Chapter6-ASCIISerialization/include
-    ../Chapter7-ImprovedAnyMeasurement/include
+    ../Common/include
     ../ThirdParty/readerwriterqueue
 )
