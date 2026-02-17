@@ -26,6 +26,13 @@ Code will be updated and refined as new chapters are released.
 > **Note:** This repository may contain work-in-progress code ahead of the current published chapters.
 
 ---
+## Building the Code
+```
+cmake -S . -B build
+cmake --build build
+```
+
+This will build the entire tree.
 
 ## Feedback, Questions, and Discussion
 
