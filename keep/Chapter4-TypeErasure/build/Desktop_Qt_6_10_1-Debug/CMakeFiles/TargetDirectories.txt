@@ -1,3 +1,0 @@
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/TypeErasureDemo.dir
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/edit_cache.dir
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/Desktop_Qt_6_10_1-Debug/CMakeFiles/rebuild_cache.dir

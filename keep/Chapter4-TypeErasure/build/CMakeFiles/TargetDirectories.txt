@@ -1,3 +1,0 @@
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/CMakeFiles/TypeErasureDemo.dir
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/CMakeFiles/edit_cache.dir
-/home/mark/AutumnalSoftware/BuildingEmbeddedSystemsOnLinuxBook/Chapter4-TypeErasure/build/CMakeFiles/rebuild_cache.dir
