@@ -35,10 +35,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Add Chapters
 # ------------------------------------------------------------
 
+add_subdirectory(Common)
 add_subdirectory(Chapter4-TypeErasure)
-add_subdirectory(Chapter5-BinarySerialization)
-add_subdirectory(Chapter6-ASCIISerialization)
-add_subdirectory(Chapter7-ImprovedAnyMeasurement)
 add_subdirectory(Chapter8-SensorPipelines)
 add_subdirectory(Chapter9-SystemController)
 add_subdirectory(Chapter10-Reactor)
