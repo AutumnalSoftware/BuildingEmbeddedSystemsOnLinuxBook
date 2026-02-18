@@ -2,14 +2,15 @@
 // Copyright (c) 2026 Autumnal Software
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include "BinaryWriteStream.h"
-#include "BdsMeasurementCodecs.h"          // whatever header contains the writeXxx decls you pasted
+#include "BdsMeasurementCodecs.h"
 #include "ImmutableByteView.h"
 #include "MutableByteView.h"
 #include "MeasurementHeaderV1.h"
-
-#include <cstddef>
-#include <vector>
+#include "MeasurementTypes.h"
 
 namespace weather
 {
@@ -25,70 +26,84 @@ public:
                          const Temperature& m,
                          ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writeTemperature(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packBarometricPressure(const MeasurementHeaderV1& header,
                                 const BarometricPressure& m,
                                 ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writeBarometricPressure(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packHumidity(const MeasurementHeaderV1& header,
                       const Humidity& m,
                       ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writeHumidity(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packWindSpeed(const MeasurementHeaderV1& header,
                        const WindSpeed& m,
                        ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writeWindSpeed(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packWindDirection(const MeasurementHeaderV1& header,
                            const WindDirection& m,
                            ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writeDirection(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packPrecipitation(const MeasurementHeaderV1& header,
                            const Precipitation& m,
                            ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writePrecipitation(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
     bool packPosition(const MeasurementHeaderV1& header,
                       const Position& m,
                       ImmutableByteView& outPayload) noexcept
     {
-        return pack_impl(header, [&](BinaryWriteStream& bs)
+        return pack_impl(header,
+                         [&](BinaryWriteStream& bs)
                          {
                              writePosition(bs, m);
-                         }, outPayload);
+                         },
+                         outPayload);
     }
 
 private:
@@ -116,4 +131,5 @@ private:
 private:
     std::vector<std::byte> m_buf;
 };
-}
+
+} // namespace weather

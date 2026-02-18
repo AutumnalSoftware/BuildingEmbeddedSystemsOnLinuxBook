@@ -17,6 +17,8 @@ add_executable(external_data_source
     UartTransmitEndpoint.cpp
     TransmitEndpointFactory.h
     MeasurementPacker.h
+    StreamScheduler.cpp StreamScheduler.h ValueGenerator.cpp ValueGenerator.h
+    TransmitterApp.cpp TransmitterApp.h
 )
 
 # Treat cxxopts as a header-only dependency.
@@ -30,6 +32,9 @@ target_include_directories(cxxopts
 target_link_libraries(external_data_source
     PRIVATE
         cxxopts
+        #Common
+        #CommonBDS
+	CommonBdsMeasurementCodecs
 )
 
 # Sensible warnings (tweak as you like).
