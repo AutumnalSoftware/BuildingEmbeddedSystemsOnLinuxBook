@@ -5,6 +5,7 @@
 
 #include <cstdint>
 
+#include "MeasurementTypes.h"
 #include "SourceId.h"
 
 namespace weather {
