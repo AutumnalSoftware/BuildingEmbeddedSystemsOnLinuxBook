@@ -16,6 +16,7 @@ add_executable(external_data_source
     UartTransmitEndpoint.h
     UartTransmitEndpoint.cpp
     TransmitEndpointFactory.h
+    MeasurementPacker.h
 )
 
 # Treat cxxopts as a header-only dependency.
