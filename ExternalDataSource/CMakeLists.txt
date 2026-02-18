@@ -12,13 +12,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(external_data_source
     main.cpp
     ITransmitEndpoint.h
-    UdpTransmitEndpoint.h UdpTransmitEndpoint.cpp
+    UdpTransmitEndpoint.h
+    UdpTransmitEndpoint.cpp
     UartTransmitEndpoint.h
     UartTransmitEndpoint.cpp
     TransmitEndpointFactory.h
     MeasurementPacker.h
-    StreamScheduler.cpp StreamScheduler.h ValueGenerator.cpp ValueGenerator.h
-    TransmitterApp.cpp TransmitterApp.h
+    StreamScheduler.cpp
+    StreamScheduler.h
+    ValueGenerator.cpp
+    ValueGenerator.h
+    TransmitterApp.cpp
+    TransmitterApp.h
 )
 
 # Treat cxxopts as a header-only dependency.
@@ -32,11 +37,19 @@ target_include_directories(cxxopts
 target_link_libraries(external_data_source
     PRIVATE
         cxxopts
-        #Common
-        #CommonBDS
 	CommonBdsMeasurementCodecs
 )
 
+
+add_executable(weather_rx
+    receiver/WeatherReceiverApp.cpp
+)
+
+target_link_libraries(weather_rx
+    PRIVATE
+        CommonBdsMeasurementCodecs
+        cxxopts
+)
 # Sensible warnings (tweak as you like).
 if (MSVC)
     target_compile_options(external_data_source PRIVATE /W4)
