@@ -1,16 +1,8 @@
-That’s exactly the right move for the book.
 
-Chapter 11’s purpose is **integrating external inputs**, not teaching how to write a transmitter tool. Showing the code would just dilute the main thread.
 
-A short, practical sidebar keeps readers focused and still lets them use the tool immediately.
+# Generating Synthetic Sensor Data
 
-Here’s a book-ready sidebar you can drop in with minimal editing.
-
----
-
-## Sidebar: Generating Synthetic Sensor Data
-
-To test the system without physical hardware, the repository includes a small utility program called `weather_tx` that generates synthetic sensor data and transmits it to the system.
+To test the system without physical hardware, the repository provides this small utility program called `external_data_source` that generates synthetic sensor data and transmits it to the system.
 
 This tool runs on the host and sends measurements over either UDP or a virtual UART created with `socat`.
 
@@ -85,8 +77,3 @@ Periodic summaries can be controlled using:
 --log-every 5
 ```
 
----
-
-This keeps the focus where it belongs: the system architecture, not tooling internals.
-
-Next step in Chapter 11 is where things get interesting: data starts flowing into the reactor and framing path.
