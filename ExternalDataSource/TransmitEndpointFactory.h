@@ -12,7 +12,7 @@
 namespace weather
 {
 
-inline std::unique_ptr<ITransmitEndpoint> create_udp_tx(const std::string& host, int port)
+inline std::unique_ptr<ITransmitEndpoint> create_udp_transmitter(const std::string& host, int port)
 {
     auto ep = std::make_unique<UdpTransmitEndpoint>(host, port);
     if (!ep->open())
@@ -22,7 +22,7 @@ inline std::unique_ptr<ITransmitEndpoint> create_udp_tx(const std::string& host,
     return ep;
 }
 
-inline std::unique_ptr<ITransmitEndpoint> create_uart_tx(const std::string& device, int baud)
+inline std::unique_ptr<ITransmitEndpoint> create_uart_transmitter(const std::string& device, int baud)
 {
     auto ep = std::make_unique<UartTransmitEndpoint>(device, baud);
     if (!ep->open())

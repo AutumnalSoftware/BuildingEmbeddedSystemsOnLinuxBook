@@ -24,6 +24,7 @@ add_executable(external_data_source
     ValueGenerator.h
     TransmitterApp.cpp
     TransmitterApp.h
+    Options.h
 )
 
 # Treat cxxopts as a header-only dependency.

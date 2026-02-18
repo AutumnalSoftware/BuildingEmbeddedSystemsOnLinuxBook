@@ -9,7 +9,7 @@
 
 namespace weather
 {
-TransmitterApp::TransmitterApp(const Options& opt,
+TransmitterApp::TransmitterApp(const weather::Options& opt,
                                std::unique_ptr<ITransmitEndpoint> sink)
     : m_opt(opt)
     , m_sink(std::move(sink))

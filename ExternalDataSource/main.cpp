@@ -11,65 +11,41 @@
 #include <string>
 #include <string_view>
 
-struct UdpEndpoint
-{
-    std::string host;
-    std::uint16_t port = 0;
-};
+#include "TransmitterApp.h"
+#include "UartTransmitEndpoint.h"
+#include "UdpTransmitEndpoint.h"
+#include "TransmitEndpointFactory.h"
+#include "ValueGenerator.h"
+#include "Options.h"
 
-enum class GeneratorKind
-{
-    Constant,
-    Sine,
-    RandomWalk
-};
 
-struct Options
-{
-    std::optional<std::string> uart_device;
-    int uart_baud = 115200;
-
-    std::optional<UdpEndpoint> udp;
-
-    double temp_hz = 0.0;
-    double pressure_hz = 0.0;
-    double humidity_hz = 0.0;
-    double position_hz = 0.0;
-    double wind_hz = 0.0;
-
-    GeneratorKind gen = GeneratorKind::RandomWalk;
-    std::uint32_t seed = 1;
-
-    double duration_sec = 0.0;
-    double log_every_sec = 5.0;
-};
 
 static void print_usage(const cxxopts::Options& opts)
 {
     std::cout << opts.help() << "\n";
 }
 
-static bool parse_generator(std::string_view s, GeneratorKind& out) noexcept
+static bool parse_generator(std::string_view s, weather::GeneratorKind& out) noexcept
 {
     if (s == "constant")
     {
-        out = GeneratorKind::Constant;
+        out = weather::GeneratorKind::Constant;
         return true;
     }
     if (s == "sine")
     {
-        out = GeneratorKind::Sine;
+        out = weather::GeneratorKind::Sine;
         return true;
     }
     if (s == "random-walk")
     {
-        out = GeneratorKind::RandomWalk;
+        out = weather::GeneratorKind::RandomWalk;
         return true;
     }
     return false;
 }
 
-static bool parse_udp_endpoint(const std::string& s, UdpEndpoint& ep) noexcept
+static bool parse_udp_endpoint(const std::string& s, weather::UdpEndpoint& ep) noexcept
 {
     // Expected: host:port
     const auto pos = s.find(':');
@@ -102,7 +78,7 @@ static bool parse_udp_endpoint(const std::string& s, UdpEndpoint& ep) noexcept
     return true;
 }
 
-static bool validate_options(const Options& opt, std::string& err)
+static bool validate_options(const weather::Options& opt, std::string& err)
 {
     const bool hasUart = opt.uart_device.has_value();
     const bool hasUdp = opt.udp.has_value();
@@ -170,7 +146,7 @@ static bool validate_options(const Options& opt, std::string& err)
 
 int main(int argc, char** argv)
 {
-    Options out{};
+    weather::Options out{};
 
     try
     {
@@ -214,7 +190,7 @@ int main(int argc, char** argv)
 
         if (result.count("udp") != 0)
         {
-            UdpEndpoint ep{};
+            weather::UdpEndpoint ep{};
             if (!parse_udp_endpoint(udp, ep))
             {
                 std::cerr << "Invalid --udp endpoint. Expected host:port\n";
@@ -255,7 +231,26 @@ int main(int argc, char** argv)
         // - Construct per-stream generators
         // - Run scheduler loop until duration or SIGINT
 
-        return 0;
+        std::unique_ptr<weather::ITransmitEndpoint> sink;
+
+        if (out.uart_device.has_value())
+        {
+            sink = weather::create_uart_transmitter(*out.uart_device, out.uart_baud);
+        }
+        else
+        {
+            sink = weather::create_udp_transmitter(out.udp->host, out.udp->port);
+        }
+
+        if (!sink)
+        {
+            std::cerr << "Failed to create transmitter\n";
+            return 2;
+        }
+
+        weather::TransmitterApp app(out, std::move(sink));
+        return app.run();
+
     }
     catch (const std::exception& e)
     {

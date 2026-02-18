@@ -9,6 +9,8 @@
 #include "StreamScheduler.h"
 #include "TimeUtils.h"
 #include "ValueGenerator.h"
+#include "ITransmitEndpoint.h"
+#include "Options.h"
 
 #include <memory>
 #include <optional>
@@ -16,35 +18,10 @@
 namespace weather
 {
 
-class ITransmitEndpoint
-{
-public:
-    virtual ~ITransmitEndpoint() = default;
-    virtual bool send(ImmutableByteView bytes) noexcept = 0;
-};
-
-struct Options
-{
-    std::optional<std::string> uart_device;
-    int uart_baud = 115200;
-
-    double temp_hz = 0.0;
-    double pressure_hz = 0.0;
-    double humidity_hz = 0.0;
-    double position_hz = 0.0;
-    double wind_hz = 0.0;
-
-    GeneratorKind gen = GeneratorKind::RandomWalk;
-    std::uint32_t seed = 1;
-
-    double duration_sec = 0.0;
-    double log_every_sec = 5.0;
-};
-
 class TransmitterApp
 {
 public:
-    TransmitterApp(const Options& opt,
+    TransmitterApp(const weather::Options& opt,
                    std::unique_ptr<ITransmitEndpoint> sink);
 
     int run() noexcept;
