@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_executable(weather_tx
-    main.cpp
+    WeatherTransmitterApp.cpp
     ITransmitEndpoint.h
     UdpTransmitEndpoint.h
     UdpTransmitEndpoint.cpp
