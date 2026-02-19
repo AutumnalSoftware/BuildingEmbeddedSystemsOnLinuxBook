@@ -1,12 +1,11 @@
 
-
 # Generating Synthetic Sensor Data
 
-To test the system without physical hardware, the repository provides this small utility program called `external_data_source` that generates synthetic sensor data and transmits it to the system.
+To test the system without physical hardware, the repository provides this small utility program called `weather_tx` that generates synthetic sensor data and transmits it to the system. the repository also provides a small test program called 'weather_rx' that can be used to quickly test `weather_rx`.
 
-This tool runs on the host and sends measurements over either UDP or a virtual UART created with `socat`.
+Both tools run on the host; `weather_tx` sends measurements over either UDP or a virtual UART created with `socat`.  `weather_rx` receives and displays synthetic data from 'weather_tx'; it is valuable as a test mechanism.
 
-### Building the transmitter
+### Building ExternalDataSource:
 
 From the repository root:
 
@@ -17,10 +16,14 @@ cmake ..
 cmake --build .
 ```
 
-The executable will appear under:
+The executables will appear under:
 
 ```
 build/ExternalDataSource/weather_tx
+```
+and
+'''
+build/ExternalDataSource/weather_rx
 ```
 
 ### UDP example
@@ -59,6 +62,9 @@ weather_tx \
   --uart /dev/pts/6 \
   --temp-hz 2 \
   --pressure-hz 1
+
+./external_data_source --udp 127.0.0.1:9000 --temp-hz 2 --duration 5
+
 ```
 
 The baud rate parameter is accepted for compatibility with real hardware, although it typically has no effect when using virtual ports.
@@ -76,4 +82,3 @@ Periodic summaries can be controlled using:
 ```
 --log-every 5
 ```
-
