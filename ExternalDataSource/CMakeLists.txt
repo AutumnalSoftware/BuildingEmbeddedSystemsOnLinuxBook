@@ -14,6 +14,7 @@ add_executable(weather_tx
     ITransmitEndpoint.h
     UdpTransmitEndpoint.h
     UdpTransmitEndpoint.cpp
+    UdpEndpointParse.h
     UartTransmitEndpoint.h
     UartTransmitEndpoint.cpp
     TransmitEndpointFactory.h
@@ -44,6 +45,11 @@ target_link_libraries(weather_tx
 
 add_executable(weather_rx
     receiver/WeatherReceiverApp.cpp
+)
+
+target_include_directories(weather_rx
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(weather_rx

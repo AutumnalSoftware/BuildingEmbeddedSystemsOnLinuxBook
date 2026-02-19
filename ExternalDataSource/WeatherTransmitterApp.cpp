@@ -15,6 +15,7 @@
 #include "UartTransmitEndpoint.h"
 #include "UdpTransmitEndpoint.h"
 #include "TransmitEndpointFactory.h"
+#include "UdpEndpointParse.h"
 #include "ValueGenerator.h"
 #include "Options.h"
 
@@ -43,39 +44,6 @@ static bool parse_generator(std::string_view s, weather::GeneratorKind& out) noe
         return true;
     }
     return false;
-}
-
-static bool parse_udp_endpoint(const std::string& s, weather::UdpEndpoint& ep) noexcept
-{
-    // Expected: host:port
-    const auto pos = s.find(':');
-    if (pos == std::string::npos)
-    {
-        return false;
-    }
-
-    const std::string host = s.substr(0, pos);
-    const std::string portStr = s.substr(pos + 1);
-
-    if (host.empty() || portStr.empty())
-    {
-        return false;
-    }
-
-    char* end = nullptr;
-    const long portLong = std::strtol(portStr.c_str(), &end, 10);
-    if (end == nullptr || *end != '\0')
-    {
-        return false;
-    }
-    if (portLong <= 0 || portLong > 65535)
-    {
-        return false;
-    }
-
-    ep.host = host;
-    ep.port = static_cast<std::uint16_t>(portLong);
-    return true;
 }
 
 static bool validate_options(const weather::Options& opt, std::string& err)
