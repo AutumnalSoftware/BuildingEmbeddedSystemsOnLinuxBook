@@ -40,5 +40,6 @@ add_subdirectory(Chapter4-TypeErasure)
 add_subdirectory(Chapter8-SensorPipelines)
 add_subdirectory(Chapter9-SystemController)
 add_subdirectory(Chapter10-Reactor)
+add_subdirectory(Chapter11-FusionTiming)
 add_subdirectory(ExternalDataSource)
 
