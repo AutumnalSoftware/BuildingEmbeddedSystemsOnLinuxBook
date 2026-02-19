@@ -75,19 +75,17 @@ socat -d -d pty,raw,echo=0 pty,raw,echo=0
 This prints two device names, for example:
 
 ```
-/dev/pts/5
-/dev/pts/6
+/dev/pts/2
+/dev/pts/3
 ```
 
 Configure the system to read from one end and run the transmitter on the other:
 
 ```
 weather_tx \
-  --uart /dev/pts/6 \
+  --uart /dev/pts/3 \
   --temp-hz 2 \
   --pressure-hz 1
-
-./external_data_source --udp 127.0.0.1:9000 --temp-hz 2 --duration 5
 ```
 
 The baud rate parameter is accepted for compatibility with real hardware, although it typically has no effect when using virtual ports.
