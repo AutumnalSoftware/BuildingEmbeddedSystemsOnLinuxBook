@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(external_data_source
+add_executable(weather_tx
     main.cpp
     ITransmitEndpoint.h
     UdpTransmitEndpoint.h
@@ -35,7 +35,7 @@ target_include_directories(cxxopts
         ${CMAKE_CURRENT_LIST_DIR}/../Common/include
 )
 
-target_link_libraries(external_data_source
+target_link_libraries(weather_tx
     PRIVATE
         cxxopts
 	CommonBdsMeasurementCodecs
@@ -53,8 +53,8 @@ target_link_libraries(weather_rx
 )
 # Sensible warnings (tweak as you like).
 if (MSVC)
-    target_compile_options(external_data_source PRIVATE /W4)
+    target_compile_options(weather_tx PRIVATE /W4)
 else()
-    target_compile_options(external_data_source PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(weather_tx PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
