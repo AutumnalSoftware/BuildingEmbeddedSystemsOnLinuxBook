@@ -1,7 +1,7 @@
 
 # Generating Synthetic Sensor Data
 
-To test the system without physical hardware, the repository provides this small utility program called `weather_tx` that generates synthetic sensor data and transmits it to the system. the repository also provides a small test program called 'weather_rx' that can be used to quickly test `weather_rx`.
+To test the system without physical hardware, the repository provides this small utility program called `weather_tx` that generates synthetic sensor data and transmits it to the system. the repository also provides a small test program called 'weather_rx' that can be used to quickly test *weather_rx*.
 
 Both tools run on the host; `weather_tx` sends measurements over either UDP or a virtual UART created with `socat`.  `weather_rx` receives and displays synthetic data from 'weather_tx'; it is valuable as a test mechanism.
 
