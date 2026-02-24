@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
 
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
+
 #include "WeatherSystem.h"
 #include "RunLoops.h"
 

@@ -67,6 +67,8 @@ RunLoops::RunLoops(
     moodycamel::ReaderWriterQueue<LogEvent>& logQ)
     : m_inQ(inQ)
     , m_logQ(logQ)
+    , m_stats {}
+    , m_fusion(m_stats)
 {
 }
 
@@ -173,7 +175,7 @@ void RunLoops::consumer(const std::atomic<bool>& stop)
                 updateMax(m_stats.latencyMaxNs, nowNs - rxNs);
             }
 
-            // No per-message logging in Chapter 9.
+            m_fusion.accept(msg);
         }
         else
         {
@@ -195,6 +197,11 @@ void RunLoops::logger(const std::atomic<bool>& stop)
     std::uint64_t lastDeqTemp   = 0;
     std::uint64_t lastDeqPos    = 0;
     std::uint64_t lastDrops     = 0;
+
+    std::uint64_t lastFusionMatches       = 0;
+    std::uint64_t lastFusionNoTemp        = 0;
+    std::uint64_t lastFusionNoPos         = 0;
+    std::uint64_t lastFusionOutsideWindow = 0;
 
     while (!stop.load(std::memory_order_relaxed))
     {
@@ -230,6 +237,16 @@ void RunLoops::logger(const std::atomic<bool>& stop)
             lastDeqPos    = deqPos;
             lastDrops     = drops;
 
+            const std::uint64_t fusionMatches =
+                m_stats.fusionMatches.load(std::memory_order_relaxed);
+            const std::uint64_t fusionNoTemp =
+                m_stats.fusionNoTemp.load(std::memory_order_relaxed);
+            const std::uint64_t fusionNoPos =
+                m_stats.fusionNoPos.load(std::memory_order_relaxed);
+            const std::uint64_t fusionOutsideWindow =
+                m_stats.fusionOutsideWindow.load(std::memory_order_relaxed);
+
+
             const std::uint64_t depth =
                 m_stats.inQDepth.load(std::memory_order_relaxed);
 
@@ -242,15 +259,33 @@ void RunLoops::logger(const std::atomic<bool>& stop)
             const double latMaxMs =
                 static_cast<double>(latMaxNs) / 1'000'000.0;
 
+            const std::uint64_t fusionMatchesPerSec =
+                fusionMatches - lastFusionMatches;
+            const std::uint64_t fusionNoTempPerSec =
+                fusionNoTemp - lastFusionNoTemp;
+            const std::uint64_t fusionNoPosPerSec =
+                fusionNoPos - lastFusionNoPos;
+            const std::uint64_t fusionOutsideWindowPerSec =
+                fusionOutsideWindow - lastFusionOutsideWindow;
+
             std::cout
                 << "[STAT t=" << tSec << "s] "
                 << "enq(temp=" << enqTempPerSec << "/s pos=" << enqPosPerSec << "/s) "
                 << "deq(temp=" << deqTempPerSec << "/s pos=" << deqPosPerSec << "/s) "
                 << "drops=" << drops << " (+" << dropsPerSec << "/s) "
                 << "q(depth=" << depth << " hi=" << hi << ") "
+                << "fusion(match=" << fusionMatchesPerSec
+                << "/s missWin=" << fusionOutsideWindowPerSec
+                << "/s noTemp=" << fusionNoTempPerSec
+                << "/s noPos=" << fusionNoPosPerSec << "/s) "
                 << "latMax=" << std::fixed << std::setprecision(2) << latMaxMs << "ms\n";
 
             lastReport = now;
+
+            lastFusionMatches       = fusionMatches;
+            lastFusionNoTemp        = fusionNoTemp;
+            lastFusionNoPos         = fusionNoPos;
+            lastFusionOutsideWindow = fusionOutsideWindow;
         }
         else
         {
@@ -267,7 +302,7 @@ void RunLoops::external_inputs(const std::atomic<bool>& stop)
     std::array<weather::SensorContext, 1> sensors{};
 
     // weather_tx should target this port.
-    weather::configure_udp_sensor(sensors[0], 9000, inQ, 4096);
+    weather::configure_udp_sensor(sensors[0], 9000, inQ, 4096, m_stats);
 
     const int epfd = ::epoll_create1(0);
     if (epfd < 0)
@@ -285,7 +320,7 @@ void RunLoops::external_inputs(const std::atomic<bool>& stop)
     std::cout << "Chapter 11: UDP BDS ingest\n";
     std::cout << "  Receiver: UDP 9000\n";
     std::cout << "  Example:\n";
-    std::cout << "    weather_tx --udp 127.0.0.1:9000 --temp-hz 10 --duration 0\n";
+    std::cout << "    weather_tx --udp 127.0.0.1:9000 --temp-hz 10 --position-hz 1 --duration 0\n";
     std::cout << "Ctrl-C to stop.\n";
 
     epoll_event events[8]{};

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
+
 #include "SensorContext.h"
 #include <cassert>
 
@@ -55,4 +58,5 @@ void SensorContext::destroy_to_unconfigured() noexcept
     mOps->destroy(mStorage.bytes);
     mOps = &UnconfiguredOps();
 }
+
 }

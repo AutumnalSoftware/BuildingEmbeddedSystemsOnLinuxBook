@@ -8,24 +8,9 @@
 #include "AnyMeasurement.h"
 #include "LogEvent.h"
 #include "readerwriterqueue/readerwriterqueue.h"
+#include "FusionState.h"
 
-struct Chapter9Stats
-{
-    std::atomic<std::uint64_t> enqTempOk{0};
-    std::atomic<std::uint64_t> enqPosOk{0};
-
-    std::atomic<std::uint64_t> deqTemp{0};
-    std::atomic<std::uint64_t> deqPos{0};
-
-    std::atomic<std::uint64_t> enqDrops{0};
-
-    std::atomic<std::uint64_t> inQDepth{0};
-    std::atomic<std::uint64_t> inQDepthHi{0};
-
-    std::atomic<std::uint64_t> latencyMaxNs{0};
-};
-
-
+#include "SystemStats.h"
 
 class RunLoops
 {
@@ -43,5 +28,7 @@ private:
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement, 128>& m_inQ;
     moodycamel::ReaderWriterQueue<LogEvent>& m_logQ;
 
-    Chapter9Stats m_stats;
+    weather::SystemStats m_stats;
+
+    weather::FusionState m_fusion;
 };

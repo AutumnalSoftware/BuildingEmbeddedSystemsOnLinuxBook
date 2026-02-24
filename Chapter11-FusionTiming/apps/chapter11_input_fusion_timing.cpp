@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MIT
+// Copyright (c) 2025 Autumnal Software
+
+// SPDX-License-Identifier: MIT
 // Copyright (c) 2026 Autumnal Software
 
 #include "WeatherSystem.h"
@@ -10,8 +13,6 @@
 
 int main()
 {
-    constexpr int RunSeconds = 20;
-
     WeatherSystem system;
     WeatherSystemBuilder builder;
 
@@ -25,7 +26,7 @@ int main()
     system.start();
 
     // Run briefly for manual testing.
-    std::this_thread::sleep_for(std::chrono::seconds(RunSeconds));
+    std::this_thread::sleep_for(std::chrono::seconds(500));
 
     system.stop();
     system.join();
