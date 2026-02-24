@@ -29,6 +29,11 @@ void TransmitterApp::initStreams()
     {
         m_sched.addStream(Stream_Temperature, m_opt.temp_hz);
     }
+
+    if (m_opt.position_hz > 0.0)
+    {
+        m_sched.addStream(Stream_Position, m_opt.position_hz);
+    }
 }
 
 bool TransmitterApp::emitTemperature(double dt_sec) noexcept
@@ -47,6 +52,33 @@ bool TransmitterApp::emitTemperature(double dt_sec) noexcept
 
     ImmutableByteView payload{};
     if (!m_packer.packTemperature(h, t, payload))
+    {
+        return false;
+    }
+
+    return m_sink->send(payload);
+}
+
+bool TransmitterApp::emitPosition(double dt_sec) noexcept
+{
+    (void)dt_sec;
+
+    Position p{};
+    p.lat = 42.0;    // keep it simple for now
+    p.lon = -77.0;
+    p.alt = 150.0;
+
+    MeasurementHeaderV1 h{};
+    const std::uint64_t ts = now_ns();
+
+    h.rxTime = ts;
+    h.eventTime = ts;
+    h.kind = MeasurementKind::Position;
+    h.source = SourceId::Unknown;
+    h.flags = 0;
+
+    ImmutableByteView payload{};
+    if (!m_packer.packPosition(h, p, payload))
     {
         return false;
     }
@@ -102,6 +134,9 @@ int TransmitterApp::run() noexcept
         {
             case Stream_Temperature:
                 ok = emitTemperature(dt_sec);
+                break;
+            case Stream_Position:
+                ok = emitPosition(dt_sec);
                 break;
             default:
                 ok = false;

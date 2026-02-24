@@ -29,6 +29,7 @@ public:
 private:
     void initStreams();
     bool emitTemperature(double dt_sec) noexcept;
+    bool emitPosition(double dt_sec) noexcept;
 
 private:
     Options m_opt{};
@@ -39,6 +40,11 @@ private:
 
     ValueGenerator m_temp_gen{};
 
+    ValueGenerator m_pos_lat_gen{};
+    ValueGenerator m_pos_lon_gen{};
+    ValueGenerator m_pos_alt_gen{};
+
     static constexpr std::size_t Stream_Temperature = 1;
+    static constexpr std::size_t Stream_Position    = 2;
 };
 } // namespace weather
