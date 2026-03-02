@@ -4,7 +4,7 @@ option(BUILD_DEMOS "Build demo programs" OFF)
 # Chapter 11 BDS reactor (UDP only, first milestone)
 # -----------------------------------------------------------------------------
 
-add_library(reactor_bds STATIC
+add_library(chapter11_reactor_bds STATIC
     src/SensorContext.cpp
     src/UdpSensor.cpp
 
@@ -14,19 +14,19 @@ add_library(reactor_bds STATIC
     include/PortStats.h
 )
 
-target_compile_features(reactor_bds PUBLIC cxx_std_17)
+target_compile_features(chapter11_reactor_bds PUBLIC cxx_std_17)
 
-target_include_directories(reactor_bds PUBLIC
+target_include_directories(chapter11_reactor_bds PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../Common/include
     ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty
 )
 
-target_compile_options(reactor_bds PRIVATE
+target_compile_options(chapter11_reactor_bds PRIVATE
     -Wall -Wextra -Wpedantic
 )
 
-target_link_libraries(reactor_bds PUBLIC
+target_link_libraries(chapter11_reactor_bds PUBLIC
     CommonBdsMeasurementCodecs
 )
 
@@ -62,7 +62,7 @@ target_compile_options(chapter11_system PRIVATE
 )
 
 target_link_libraries(chapter11_system PRIVATE
-    reactor_bds
+    chapter11_reactor_bds
     Common
 )
 
