@@ -1,3 +1,5 @@
+⭐ If you find this repository useful, please consider starring it!
+
 # Designing Deterministic Systems with Modern C++
 
 _(Formerly **Building Embedded Systems on Linux: A Modern C++ Approach**.)_
