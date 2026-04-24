@@ -8,7 +8,7 @@ _(Formerly **Building Embedded Systems on Linux: A Modern C++ Approach**.)_
 
 This repository contains companion code for  
 **Designing Deterministic Systems with Modern C++: Host-First Development on Linux**  
-https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach
+[https://leanpub.com/buildingembeddedsystemsonlinuxamoderncapproach](https://leanpub.com/designingdeterministicsystems)
 
 Each chapter directory corresponds directly to code discussed in the book, covering topics such as:
 
