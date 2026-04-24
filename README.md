@@ -6,6 +6,15 @@ _(Formerly **Building Embedded Systems on Linux: A Modern C++ Approach**.)_
 
 ## About This Repository
 
+Most software systems fail in the same way:
+
+- Logic spreads across layers
+- Data contracts drift over time
+- Concurrency behavior becomes unpredictable
+- Systems "work" but no one can fully explain why
+
+This repository is about building systems that avoid those failures.
+
 This repository contains companion code for  
 **Designing Deterministic Systems with Modern C++: Host-First Development on Linux**  
 https://leanpub.com/designingdeterministicsystems
