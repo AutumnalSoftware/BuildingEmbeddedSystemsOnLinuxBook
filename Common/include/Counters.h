@@ -4,9 +4,8 @@
 #include <new>
 
 
-// A counter that is isolated on a cache line.  It isn't thread-safe - it must be accessed only
-// on one thread at a time - but on that thread it won't cause a cache line to be sloshed around
-// from processor to processor.
+// A counter that is isolated on a cache line.  Thread-safe plus isolated on a single cache line
+// so incrementing it won't have interference penalties.
 struct Counter
 {
   void incr() { ++value; }
