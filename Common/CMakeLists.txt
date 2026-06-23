@@ -10,6 +10,7 @@ add_library(Common STATIC
     # Public headers (explicit)
     include/ImmutableByteView.h
     include/MutableByteView.h
+    include/Counters.h
 
     include/Status.h
 

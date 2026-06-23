@@ -64,6 +64,14 @@ void SensorPipeline::join()
     }
 }
 
+void SensorPipeline::status(std::ostream& os)
+{
+  os << "Producer enqueued: " << producer_enqueued << "\n"
+     << "         blocked:  " << producer_blocked  << "\n"
+     << "Consumer blocked:  " << consumer_blocked  << "\n"
+     << "         dequeued: " << consumer_dequeued << "\n";
+}
+
 void SensorPipeline::producerLoop()
 {
     PositionProducer producer;
@@ -81,12 +89,19 @@ void SensorPipeline::producerLoop()
 
         weather::AnyMeasurement msg(header, pos);
 
-        while (m_running.load() && !m_queue.try_enqueue(msg))
+        while (m_running.load())
         {
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
+          if (m_queue.try_enqueue(msg))
+          {
+              producer_enqueued++;
+              break;
+          } else {
+              producer_blocked++;
+              std::this_thread::sleep_for(std::chrono::microseconds(50));
+;          }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -107,9 +122,11 @@ void SensorPipeline::consumerLoop()
     {
         if (!m_queue.try_dequeue(msg))
         {
+            consumer_blocked++;
             std::this_thread::sleep_for(std::chrono::microseconds(50));
             continue;
         }
+        consumer_dequeued++;
 
         const weather::Position* pos = msg.try_get<weather::Position>();
         if (pos != nullptr)
@@ -123,12 +140,19 @@ void SensorPipeline::consumerLoop()
     }
 
     // Optional drain after stop (keeps output tidy)
-    while (m_queue.try_dequeue(msg))
+    std::cerr << "--Draining queue--\n";
+    while (true)
     {
-        const weather::Position* pos = msg.try_get<weather::Position>();
-        if (pos != nullptr)
+        if (m_queue.try_dequeue(msg))
         {
-            consumer.consume(*pos);
+            consumer_dequeued++;
+            const weather::Position* pos = msg.try_get<weather::Position>();
+            if (pos != nullptr)
+            {
+                consumer.consume(*pos);
+            }
+        } else {
+            break;
         }
     }
 }

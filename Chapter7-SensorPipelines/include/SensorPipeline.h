@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "readerwriterqueue.h"
+#include "Counters.h"
 
 #include "AnyMeasurement.h"
 
@@ -25,6 +26,8 @@ public:
     void stop();
     void join();
 
+    void status(std::ostream& os);
+
 private:
     void producerLoop();
     void consumerLoop();
@@ -34,4 +37,9 @@ private:
     std::thread m_producerThread;
     std::thread m_consumerThread;
     std::atomic<bool> m_running { false };
+
+    Counter producer_enqueued;
+    Counter producer_blocked;
+    Counter consumer_blocked;
+    Counter consumer_dequeued;
 };

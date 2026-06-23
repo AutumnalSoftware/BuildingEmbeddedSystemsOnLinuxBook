@@ -1,3 +1,5 @@
+#include <chrono>
+#include <iostream>
 #include <thread>
 
 #include "SensorPipeline.h"
@@ -17,6 +19,7 @@ int main()
     pipeline.stop();
     pipeline.join();
 
+    pipeline.status(std::cerr);
+
     return 0;
 }
-
