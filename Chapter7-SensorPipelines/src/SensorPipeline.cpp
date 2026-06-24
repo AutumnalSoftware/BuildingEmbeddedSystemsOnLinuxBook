@@ -23,6 +23,24 @@ std::uint64_t nowNs() noexcept
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             Clock::now().time_since_epoch()).count());
 }
+
+// A test scaffold for the producer loop that allows for bursts of measurements,
+// the idea is to _force_, from time to time, the producer to block on emplacing
+// a measurement to a full queue
+// TODO: It is the `PositionProducer` that is the test fake here, this `SensorPipeline`
+// is supposed to be production.  Yet this test scaffold is jammed in here.  Find a
+// decent way to _abstract_ this away so this "burstiness" can be removed from this
+// file.
+long producerEnqueueInterval()
+{
+    static constexpr long burstInterval = 1000;
+    static constexpr long burstOf = 300;
+
+    static long count{0};
+
+    return count++ % burstInterval <= burstOf;
+}
+
 } // namespace
 
 SensorPipeline::SensorPipeline(std::size_t capacity)
@@ -76,6 +94,7 @@ void SensorPipeline::producerLoop()
 {
     PositionProducer producer;
 
+    // Loop getting measurements until done (stopped)
     while (m_running.load())
     {
         const weather::Position pos = producer.nextPosition();
@@ -89,6 +108,7 @@ void SensorPipeline::producerLoop()
 
         weather::AnyMeasurement msg(header, pos);
 
+        // busy loop until measurement successfully enqueued
         while (m_running.load())
         {
           if (m_queue.try_enqueue(msg))
@@ -101,7 +121,7 @@ void SensorPipeline::producerLoop()
 ;          }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(producerEnqueueInterval()));
     }
 }
 
