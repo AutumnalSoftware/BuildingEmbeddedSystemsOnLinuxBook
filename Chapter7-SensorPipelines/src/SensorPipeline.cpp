@@ -12,6 +12,7 @@
 #include "MeasurementTypes.h"   // weather::Position, MeasurementHeaderV1, SourceId
 #include "PositionProducer.h"
 #include "PositionConsumer.h"
+#include "DefaultSensorPipelineIntervals.h"
 
 namespace
 {
@@ -24,29 +25,22 @@ std::uint64_t nowNs() noexcept
             Clock::now().time_since_epoch()).count());
 }
 
-// A test scaffold for the producer loop that allows for bursts of measurements,
-// the idea is to _force_, from time to time, the producer to block on emplacing
-// a measurement to a full queue
-// TODO: It is the `PositionProducer` that is the test fake here, this `SensorPipeline`
-// is supposed to be production.  Yet this test scaffold is jammed in here.  Find a
-// decent way to _abstract_ this away so this "burstiness" can be removed from this
-// file.
-long producerEnqueueInterval()
-{
-    static constexpr long burstInterval = 1000;
-    static constexpr long burstOf = 300;
-
-    static long count{0};
-
-    return count++ % burstInterval <= burstOf;
-}
-
 } // namespace
 
 SensorPipeline::SensorPipeline(std::size_t capacity)
-    : m_queue(capacity)
+  : SensorPipeline(capacity, getDefaultIntervals(), getDefaultIntervals())
 {
 }
+
+SensorPipeline::SensorPipeline(std::size_t capacity,
+                               const SensorPipelineIntervals& producerIntervals,
+                               const SensorPipelineIntervals& consumerIntervals)
+  : m_queue(capacity)
+  , m_producerIntervals(producerIntervals)
+  , m_consumerIntervals(consumerIntervals)
+{
+}
+
 
 SensorPipeline::~SensorPipeline()
 {
@@ -117,11 +111,11 @@ void SensorPipeline::producerLoop()
               break;
           } else {
               producer_blocked++;
-              std::this_thread::sleep_for(std::chrono::microseconds(50));
-;          }
+              std::this_thread::sleep_for(m_producerIntervals.blockedWaitingInterval());
+          }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(producerEnqueueInterval()));
+        std::this_thread::sleep_for(m_producerIntervals.pollingInterval());
     }
 }
 
@@ -143,7 +137,7 @@ void SensorPipeline::consumerLoop()
         if (!m_queue.try_dequeue(msg))
         {
             consumer_blocked++;
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
+            std::this_thread::sleep_for(m_consumerIntervals.blockedWaitingInterval());
             continue;
         }
         consumer_dequeued++;
@@ -159,8 +153,8 @@ void SensorPipeline::consumerLoop()
         }
     }
 
-    // Optional drain after stop (keeps output tidy)
-    std::cerr << "--Draining queue--\n";
+    // Drain after stop to ensure all measurements are used and
+    // pipeline is emptied)
     while (true)
     {
         if (m_queue.try_dequeue(msg))

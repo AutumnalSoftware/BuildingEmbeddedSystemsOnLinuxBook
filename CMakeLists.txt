@@ -22,6 +22,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wpedantic
         -Wconversion
         -Wshadow
+        -fno-rtti
     )
 endif()
 
