@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
 
-#include "Chapter9MeasurementFactory.h"
+#include "Chapter8MeasurementFactory.h"
 
-namespace chapter9
+namespace chapter8
 {
     std::uint64_t to_ns(Clock::time_point t) noexcept
     {

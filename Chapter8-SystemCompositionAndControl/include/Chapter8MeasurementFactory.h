@@ -9,7 +9,7 @@
 #include "AnyMeasurement.h"
 #include "MeasurementTypes.h"
 
-namespace chapter9
+namespace chapter8
 {
     using Clock = std::chrono::steady_clock;
 

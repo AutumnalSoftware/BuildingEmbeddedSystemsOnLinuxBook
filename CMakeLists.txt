@@ -40,7 +40,7 @@ add_subdirectory(SetupChapter)
 add_subdirectory(Common)
 add_subdirectory(Chapter3-TypeErasure)
 add_subdirectory(Chapter7-SensorPipelines)
-add_subdirectory(Chapter8-SytemCompositionAndControl)  # note spelling error
+add_subdirectory(Chapter8-SystemCompositionAndControl)
 add_subdirectory(Chapter9-IntegratingExternalInputs)
 add_subdirectory(Chapter10-FusionTiming)
 add_subdirectory(Chapter11-DeterministicFusionAndOutput)

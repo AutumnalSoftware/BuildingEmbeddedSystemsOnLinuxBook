@@ -9,7 +9,7 @@
 #include "LogEvent.h"
 #include "readerwriterqueue.h"
 
-struct Chapter9Stats
+struct Chapter8Stats
 {
     std::atomic<std::uint64_t> enqTempOk{0};
     std::atomic<std::uint64_t> enqPosOk{0};
@@ -27,10 +27,10 @@ struct Chapter9Stats
 
 
 
-class Chapter9RunLoops
+class Chapter8RunLoops
 {
 public:
-    Chapter9RunLoops(moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& inQ,
+    Chapter8RunLoops(moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& inQ,
                      moodycamel::ReaderWriterQueue<LogEvent>& logQ);
 
     void producer(const std::atomic<bool>& stop);
@@ -41,5 +41,5 @@ private:
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& m_inQ;
     moodycamel::ReaderWriterQueue<LogEvent>& m_logQ;
 
-    Chapter9Stats m_stats;
+    Chapter8Stats m_stats;
 };
