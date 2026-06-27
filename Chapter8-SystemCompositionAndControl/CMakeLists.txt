@@ -11,7 +11,6 @@ add_executable(chapter8_demo
     src/Chapter8RunLoops.cpp
     include/WeatherSystem.h
     include/WeatherSystemBuilder.h
-    include/Chapter8MeasurementFactory.h
     include/Chapter8RunLoops.h
 )
 

@@ -46,8 +46,12 @@ int main(int argc, char** argv)
         lock_memory(); // After construction, before execution
     }
 
+
+    const auto deviceRunLength{std::chrono::seconds(15)};
+
+
     system.start();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    std::this_thread::sleep_for(deviceRunLength);
     system.stop();
     system.join();
 
