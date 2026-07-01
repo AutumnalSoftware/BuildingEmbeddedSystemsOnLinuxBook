@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025 Autumnal Software
 
-# Chapter 9 - System Controller (Snapshot)
+# Chapter 8 - System Composition And Control (Snapshot)
 
-This repository accompanies Chapter 9 of _Designing Deterministic Systems with Modern C++_.
+This repository accompanies Chapter 8 of _Designing Deterministic Systems with Modern C++_.
 
-This Chapter 9 demo is about system composition and control.
+This Chapter 8 demo is about system composition and control.
 
 - Uses `std::thread`
 - No Boost.Asio
@@ -18,7 +18,7 @@ This Chapter 9 demo is about system composition and control.
 This snapshot assumes the repository already provides:
 
 - `ThirdParty/readerwriterqueue`
-- `ThirdParty/boost_asio_1_36_0` (not used in Chapter 9, but present for later chapters)
+- `ThirdParty/boost_asio_1_36_0` (not used in Chapter 8, but present for later chapters)
 - `../Chapter7-ImprovedAnyMeasurement/include` containing:
   - `MeasurementTypes.h`
   - `AnyMeasurement.h`

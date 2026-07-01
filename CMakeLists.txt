@@ -22,6 +22,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         -Wpedantic
         -Wconversion
         -Wshadow
+        -fno-rtti
     )
 endif()
 
@@ -35,11 +36,12 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Add Chapters
 # ------------------------------------------------------------
 
+add_subdirectory(SetupChapter)
 add_subdirectory(Common)
-add_subdirectory(Chapter4-TypeErasure)
-add_subdirectory(Chapter8-SensorPipelines)
-add_subdirectory(Chapter9-SystemController)
-add_subdirectory(Chapter10-Reactor)
-add_subdirectory(Chapter11-FusionTiming)
-add_subdirectory(Chapter12-DeterministicFusionAndOutput)
+add_subdirectory(Chapter3-TypeErasure)
+add_subdirectory(Chapter7-SensorPipelines)
+add_subdirectory(Chapter8-SystemCompositionAndControl)
+add_subdirectory(Chapter9-IntegratingExternalInputs)
+add_subdirectory(Chapter10-FusionTiming)
+add_subdirectory(Chapter11-DeterministicFusionAndOutput)
 add_subdirectory(ExternalDataSource)

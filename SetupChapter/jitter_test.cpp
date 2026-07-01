@@ -80,9 +80,8 @@ int main(int argc, char* argv[])
     const long double avg_abs = sum_abs / static_cast<long double>(abs_jitter.size());
 
     std::sort(abs_jitter.begin(), abs_jitter.end());
-    const std::size_t idx_99 = static_cast<std::size_t>(
-        (abs_jitter.size() - 1) * 0.99
-    );
+    const std::size_t idx_99 = static_cast<std::size_t>(static_cast<float>(abs_jitter.size() - 1) * 0.99);
+
     const long long p99_abs = abs_jitter[idx_99];
 
     std::cout << "Jitter statistics (nanoseconds)\n";
@@ -94,4 +93,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

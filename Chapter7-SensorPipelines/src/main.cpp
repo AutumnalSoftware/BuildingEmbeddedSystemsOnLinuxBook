@@ -1,13 +1,19 @@
+#include <chrono>
+#include <iostream>
 #include <thread>
 
 #include "SensorPipeline.h"
+#include "BurstySensorPipelineIntervals.h"
+#include "DefaultSensorPipelineIntervals.h"
 
 using namespace weather;
 
 int main()
 {
     // "Capacity" is an initial sizing parameter for the SPSC queue.
-    SensorPipeline pipeline(/*capacity*/ 128);
+    SensorPipeline pipeline(128 /* capacity */,
+                            getBurstyIntervals() /* producer intervals */,
+                            getDefaultIntervals() /* consumer intervals */);
 
     pipeline.start();
 
@@ -17,6 +23,7 @@ int main()
     pipeline.stop();
     pipeline.join();
 
+    pipeline.status(std::cerr);
+
     return 0;
 }
-

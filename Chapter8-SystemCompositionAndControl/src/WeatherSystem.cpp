@@ -2,12 +2,12 @@
 // Copyright (c) 2025 Autumnal Software
 
 #include "WeatherSystem.h"
-#include "Chapter9RunLoops.h"
+#include "Chapter8RunLoops.h"
 
 WeatherSystem::WeatherSystem()
     : m_inQ(256)
     , m_logQ(64)
-    , m_runLoops(new Chapter9RunLoops(m_inQ, m_logQ))
+    , m_runLoops(new Chapter8RunLoops(m_inQ, m_logQ))
 {
 }
 
@@ -59,7 +59,7 @@ moodycamel::ReaderWriterQueue<LogEvent>& WeatherSystem::logQueue() noexcept
     return m_logQ;
 }
 
-Chapter9RunLoops& WeatherSystem::runLoops() noexcept
+Chapter8RunLoops& WeatherSystem::runLoops() noexcept
 {
     return *m_runLoops;
 }

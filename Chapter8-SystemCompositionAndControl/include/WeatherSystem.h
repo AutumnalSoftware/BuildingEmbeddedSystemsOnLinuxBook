@@ -12,7 +12,7 @@
 #include "LogEvent.h"
 #include "readerwriterqueue.h"
 
-class Chapter9RunLoops;
+class Chapter8RunLoops;
 
 class WeatherSystem
 {
@@ -35,13 +35,13 @@ public:
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& inQueue() noexcept;
     moodycamel::ReaderWriterQueue<LogEvent>& logQueue() noexcept;
 
-    Chapter9RunLoops& runLoops() noexcept;
+    Chapter8RunLoops& runLoops() noexcept;
 
 private:
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement> m_inQ;
     moodycamel::ReaderWriterQueue<LogEvent> m_logQ;
 
-    Chapter9RunLoops* m_runLoops;
+    Chapter8RunLoops* m_runLoops;
 
     std::array<std::function<void(const std::atomic<bool>&)>, ThreadCount> m_entries {};
     std::array<std::thread, ThreadCount> m_threads {};

@@ -12,6 +12,7 @@
 #include "MeasurementTypes.h"   // weather::Position, MeasurementHeaderV1, SourceId
 #include "PositionProducer.h"
 #include "PositionConsumer.h"
+#include "DefaultSensorPipelineIntervals.h"
 
 namespace
 {
@@ -23,12 +24,23 @@ std::uint64_t nowNs() noexcept
         std::chrono::duration_cast<std::chrono::nanoseconds>(
             Clock::now().time_since_epoch()).count());
 }
+
 } // namespace
 
 SensorPipeline::SensorPipeline(std::size_t capacity)
-    : m_queue(capacity)
+  : SensorPipeline(capacity, getDefaultIntervals(), getDefaultIntervals())
 {
 }
+
+SensorPipeline::SensorPipeline(std::size_t capacity,
+                               const SensorPipelineIntervals& producerIntervals,
+                               const SensorPipelineIntervals& consumerIntervals)
+  : m_queue(capacity)
+  , m_producerIntervals(producerIntervals)
+  , m_consumerIntervals(consumerIntervals)
+{
+}
+
 
 SensorPipeline::~SensorPipeline()
 {
@@ -64,10 +76,19 @@ void SensorPipeline::join()
     }
 }
 
+void SensorPipeline::status(std::ostream& os)
+{
+  os << "Producer enqueued: " << producer_enqueued << "\n"
+     << "         blocked:  " << producer_blocked  << "\n"
+     << "Consumer blocked:  " << consumer_blocked  << "\n"
+     << "         dequeued: " << consumer_dequeued << "\n";
+}
+
 void SensorPipeline::producerLoop()
 {
     PositionProducer producer;
 
+    // Loop getting measurements until done (stopped)
     while (m_running.load())
     {
         const weather::Position pos = producer.nextPosition();
@@ -81,12 +102,20 @@ void SensorPipeline::producerLoop()
 
         weather::AnyMeasurement msg(header, pos);
 
-        while (m_running.load() && !m_queue.try_enqueue(msg))
+        // busy loop until measurement successfully enqueued
+        while (m_running.load())
         {
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
+          if (m_queue.try_enqueue(msg))
+          {
+              producer_enqueued++;
+              break;
+          } else {
+              producer_blocked++;
+              std::this_thread::sleep_for(m_producerIntervals.blockedWaitingInterval());
+          }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(m_producerIntervals.pollingInterval());
     }
 }
 
@@ -107,9 +136,11 @@ void SensorPipeline::consumerLoop()
     {
         if (!m_queue.try_dequeue(msg))
         {
-            std::this_thread::sleep_for(std::chrono::microseconds(50));
+            consumer_blocked++;
+            std::this_thread::sleep_for(m_consumerIntervals.blockedWaitingInterval());
             continue;
         }
+        consumer_dequeued++;
 
         const weather::Position* pos = msg.try_get<weather::Position>();
         if (pos != nullptr)
@@ -122,13 +153,20 @@ void SensorPipeline::consumerLoop()
         }
     }
 
-    // Optional drain after stop (keeps output tidy)
-    while (m_queue.try_dequeue(msg))
+    // Drain after stop to ensure all measurements are used and
+    // pipeline is emptied)
+    while (true)
     {
-        const weather::Position* pos = msg.try_get<weather::Position>();
-        if (pos != nullptr)
+        if (m_queue.try_dequeue(msg))
         {
-            consumer.consume(*pos);
+            consumer_dequeued++;
+            const weather::Position* pos = msg.try_get<weather::Position>();
+            if (pos != nullptr)
+            {
+                consumer.consume(*pos);
+            }
+        } else {
+            break;
         }
     }
 }

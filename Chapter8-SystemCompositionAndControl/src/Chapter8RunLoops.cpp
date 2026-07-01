@@ -7,7 +7,7 @@
 #include <chrono>
 #include <thread>
 
-#include "Chapter9RunLoops.h"
+#include "Chapter8RunLoops.h"
 #include "MeasurementTypes.h"
 
 //
@@ -39,7 +39,7 @@ static void updateMax(std::atomic<std::uint64_t>& maxVal,
     }
 }
 
-Chapter9RunLoops::Chapter9RunLoops(
+Chapter8RunLoops::Chapter8RunLoops(
     moodycamel::ReaderWriterQueue<weather::AnyMeasurement>& inQ,
     moodycamel::ReaderWriterQueue<LogEvent>& logQ)
     : m_inQ(inQ)
@@ -47,7 +47,7 @@ Chapter9RunLoops::Chapter9RunLoops(
 {
 }
 
-void Chapter9RunLoops::producer(const std::atomic<bool>& stop)
+void Chapter8RunLoops::producer(const std::atomic<bool>& stop)
 {
     using namespace std::chrono;
 
@@ -112,7 +112,7 @@ void Chapter9RunLoops::producer(const std::atomic<bool>& stop)
     }
 }
 
-void Chapter9RunLoops::consumer(const std::atomic<bool>& stop)
+void Chapter8RunLoops::consumer(const std::atomic<bool>& stop)
 {
     using namespace std::chrono;
 
@@ -150,7 +150,7 @@ void Chapter9RunLoops::consumer(const std::atomic<bool>& stop)
                 updateMax(m_stats.latencyMaxNs, nowNs - rxNs);
             }
 
-            // No per-message logging in Chapter 9.
+            // No per-message logging in Chapter 8.
         }
         else
         {
@@ -160,7 +160,7 @@ void Chapter9RunLoops::consumer(const std::atomic<bool>& stop)
 }
 
 
-void Chapter9RunLoops::logger(const std::atomic<bool>& stop)
+void Chapter8RunLoops::logger(const std::atomic<bool>& stop)
 {
     using namespace std::chrono;
 

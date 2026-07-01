@@ -10,6 +10,8 @@ add_executable(SensorPipelineDemo
     include/PositionProducer.h
     include/PositionConsumer.h
     include/SensorPipeline.h
+    include/BurstySensorPipelineIntervals.h
+    include/DefaultSensorPipelineIntervals.h
     src/SensorPipeline.cpp
     src/PositionConsumer.cpp
     src/PositionProducer.cpp
